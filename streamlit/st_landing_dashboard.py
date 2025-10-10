@@ -622,8 +622,37 @@ def create_layout():
     """, unsafe_allow_html=True)
     
     # Add Q2 pie chart as the first chart
-    st.title("📊 Survey Overview")
-    st.markdown("**Comprehensive overview of survey responses and key insights**")
+    st.title("📊 General Overview")
+    st.markdown("**This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, which gathers inputs from ILO departments and regional offices working on youth employment. It offers an overview of how the Organization is advancing decent work for young women and men through coordinated action across programmes and regions. 
+
+The dashboard is organized into six tabs: 
+1. General Overview – background, definitions, and references 
+2. Clusters of the Implementation Framework – summary of reported outputs by cluster 
+3–6 Cluster Deep Dives – detailed insights on progress and achievements 
+
+Filters and Navigation 
+
+A Global Filter allows users to filter results by year of reporting. 
+
+Some tabs include an additional filter to display results by specific department or region. 
+
+All filters can be accessed through the navigation panel on the left. 
+
+Definitions 
+
+In the context of this analysis, the following definitions are adopted: 
+
+Outputs: tangible deliverables or results contributing to YEAP implementation. 
+
+Respondents: ILO specialists and focal points from HQ and field offices. 
+
+References 
+
+YEAP 2020–2030 
+
+Youth Employment Crisis: A Call for Action (ILC, 2012) 
+
+Global Call to Action for a Human-Centred Recovery (ILC, 2021) **")
     st.markdown("---")
     
     # Load and display Q2 data
@@ -658,4 +687,5 @@ def create_layout():
         st.warning("No Q3-Q4-Q5 data available")
     
     st.markdown("---")
+
     st.write("Use the sidebar to select year and navigate other dashboards.")
