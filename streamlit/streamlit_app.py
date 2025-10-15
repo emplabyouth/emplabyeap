@@ -92,13 +92,16 @@ try:
     
     # Set default to 2025 if available, otherwise most recent year, otherwise 'All'
     default_index = 0  # Default to 'All'
-    if '2025' in year_options:
+    # Set default to 2024 if available, otherwise most recent year
+    if '2024' in year_options:
+        default_index = year_options.index('2024')
+    elif '2025' in year_options:
         default_index = year_options.index('2025')
     elif len(year_options) > 1:
-        default_index = 1  # Most recent year if 2025 not available
+        default_index = 1  # Most recent year if neither 2024 nor 2025 available
     
     selected_year = st.sidebar.selectbox(
-        "Select Year",
+        "Select Period",
         year_options,
         index=default_index,
         key="selected_year",
