@@ -8,18 +8,23 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
+from color_config import (
+    PRIMARY_COLOR, SECONDARY_COLOR, CHART_COLORS, CHART_COLORS_HEX,
+    get_primary_color, get_secondary_color, get_chart_colors, get_chart_colors_hex,
+    get_frequency_gradient_colors
+)
 
 class StreamlitStyleManager:
     """Streamlit style manager - responsible for global style configuration and theme management"""
     
-    # Default  theme  colors
+    # Default  theme  colors - Updated with new color scheme
     DEFAULT_THEME_COLORS = {
-        "primary": "#3498DB",
-        "secondary": "#F39C12", 
-        "success": "#2ECC71",
-        "danger": "#E74C3C",
-        "warning": "#F1C40F",
-        "info": "#17A2B8",
+        "primary": "#1E2DBE",      # RGB(30, 45, 190) - 主色
+        "secondary": "#C8303C",    # RGB(200, 48, 60) - 第二颜色
+        "success": "#54873C",      # RGB(84, 135, 60) - 绿色
+        "danger": "#C8303C",       # RGB(200, 48, 60) - 第二颜色
+        "warning": "#E49428",      # RGB(228, 148, 40) - 橙色
+        "info": "#05BDBD",         # RGB(5, 189, 189) - 青色
         "light": "#F8F9FA",
         "dark": "#343A40",
         "background": "#FFFFFF",
@@ -27,10 +32,16 @@ class StreamlitStyleManager:
         "border": "#DEE2E6"
     }
     
-    # Default chart color sequence
+    # Default chart color sequence - Updated with new color scheme
     DEFAULT_CHART_COLORS = [
-        "#3498DB", "#E74C3C", "#2ECC71", "#F39C12", "#9B59B6",
-        "#1ABC9C", "#34495E", "#F1C40F", "#E67E22", "#95A5A6",
+        "#1E2DBE",  # RGB(30, 45, 190) - 主色
+        "#C8303C",  # RGB(200, 48, 60) - 第二颜色
+        "#05BDBD",  # RGB(5, 189, 189) - 青色
+        "#E49428",  # RGB(228, 148, 40) - 橙色
+        "#960A55",  # RGB(150, 10, 85) - 紫红色
+        "#54873C",  # RGB(84, 135, 60) - 绿色
+        # 备用颜色，如果需要更多颜色
+        "#34495E", "#F1C40F", "#E67E22", "#95A5A6",
         "#8E44AD", "#16A085", "#2C3E50", "#D35400", "#7F8C8D"
     ]
     
@@ -44,7 +55,7 @@ class StreamlitStyleManager:
         """Load global chart configuration - unify chart styles across all modules"""
         return {
             'pie_chart': {
-                'color_sequence': px.colors.qualitative.Set3,
+                'color_sequence': self.DEFAULT_CHART_COLORS,  # 使用新的颜色配置
                 'text_position': 'inside',
                 'text_info': 'percent+label',
                 'hover_template': '<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>',
@@ -52,13 +63,15 @@ class StreamlitStyleManager:
                 'marker_line': {'color': '#FFFFFF', 'width': 2}
             },
             'bar_chart': {
-                'color_scale': 'Viridis',  # Use continuous color mapping, referencing dash version
+                'color_discrete_sequence': self.DEFAULT_CHART_COLORS,  # 使用新的颜色配置
+                'color_scale': 'Viridis',  # 保留连续颜色映射用于兼容性
                 'hover_template': '<b>%{x}</b><br>Count: %{y}<br>Percentage: %{customdata:.1f}%<extra></extra>',
                 'text_position': 'auto',
                 'x_angle': -45
             },
             'horizontal_bar_chart': {
-                'color_scale': 'Viridis',  # Use continuous color mapping, referencing dash version
+                'color_discrete_sequence': self.DEFAULT_CHART_COLORS,  # 使用新的颜色配置
+                'color_scale': 'Viridis',  # 保留连续颜色映射用于兼容性
                 'hover_template': '<b>%{y}</b><br>Count: %{x}<br>Percentage: %{customdata:.1f}%<extra></extra>',
                 'text_position': 'auto'
             },
@@ -588,18 +601,23 @@ class StreamlitStyleManager:
             if preserve_order and wrapped_labels:
                 category_orders = {'x': wrapped_labels}
             
+            # 使用频次分析专用渐变色
             fig = px.bar(
                 df,
                 x='labels',
                 y='values',
-                color='values',
-                color_continuous_scale=config['color_scale'],
+                color='values',  # 改回按数值着色以显示渐变
+                color_continuous_scale=get_frequency_gradient_colors(),  # 使用频次分析渐变色
                 category_orders=category_orders
             )
             
             fig.update_layout(
                 xaxis_tickangle=config['x_angle'],
-                yaxis=dict(range=[0, max(values) * 1.1] if values else [0, 10])
+                yaxis=dict(range=[0, max(values) * 1.1] if values else [0, 10]),
+                showlegend=False,
+                xaxis_title="",  # 删除X轴标签
+                yaxis_title="",  # 删除Y轴标签
+                coloraxis_colorbar=dict(title="Count")  # 恢复右侧颜色条
             )
             fig.update_traces(
                 hovertemplate=config['hover_template'],
@@ -607,24 +625,27 @@ class StreamlitStyleManager:
                 text=None,
                 textposition=None
             )
-            fig.update_coloraxes(colorbar_title="Count")
         elif chart_type == 'horizontal_bar':
             config = self.get_global_chart_config('horizontal_bar_chart')
+            # 使用频次分析专用渐变色
             fig = px.bar(
                 x=values,
                 y=wrapped_labels,
                 orientation='h',
-                color=values,
-                color_continuous_scale=config['color_scale']
+                color=values,  # 改回按数值着色以显示渐变
+                color_continuous_scale=get_frequency_gradient_colors()  # 使用频次分析渐变色
             )
             fig.update_layout(
-                xaxis=dict(range=[0, max(values) * 1.1] if values else [0, 10])
+                xaxis=dict(range=[0, max(values) * 1.1] if values else [0, 10]),
+                showlegend=False,
+                xaxis_title="",  # 删除X轴标签
+                yaxis_title="",  # 删除Y轴标签
+                coloraxis_colorbar=dict(title="Count")  # 恢复右侧颜色条
             )
             fig.update_traces(
                 hovertemplate=config['hover_template'],
                 customdata=percentages
             )
-            fig.update_coloraxes(colorbar_title="Count")
         # Chart generation section (maintain original unified style logic)
         layout_config = self.get_global_chart_config('layout')
         if title:
@@ -756,8 +777,8 @@ def create_table(data: pd.DataFrame, title: str = "Data Details"):
         )
         fig.update_layout(
             title=title,
-            xaxis_title="Count",
-            yaxis_title="Category",
+            xaxis_title="",  # 删除X轴标签
+            yaxis_title="",  # 删除Y轴标签
             coloraxis_colorbar=dict(title="Count")
         )
         return fig

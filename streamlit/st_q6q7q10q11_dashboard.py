@@ -13,12 +13,12 @@ try:
     STYLES_AVAILABLE = True
 except ImportError:
     STYLES_AVAILABLE = False
-    # Define backup colors
-    STANDARD_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    # Define backup colors - Updated with new color scheme
+STANDARD_COLORS = ['#1E2DBE', '#C8303C', '#05BDBD', '#E49428', '#960A55', '#54873C', '#34495E', '#F1C40F', '#E67E22', '#95A5A6']
 
 def safe_read_csv(file_path: str, **kwargs) -> pd.DataFrame:
     """Safely read CSV file with multiple encoding attempts"""
-    encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+    encodings_to_try = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
     
     for encoding in encodings_to_try:
         try:
@@ -50,13 +50,13 @@ def create_unified_header():
         year_text = str(selected_year)
     
     # Split title into two lines
-    main_title = "ILO Youth Employment Action Plan:"
+    main_title = "ILO Youth Employment Action Plan (YEAP):"
     year_title = f"{year_text} Reporting" if year_text else "2025 Reporting"
 
     # Create a unified blue background container for both logo and title
     st.markdown(f"""
     <div style="
-        background-color: rgb(33, 45, 183);
+        background-color: rgb(30, 45, 190);
         padding: 15px;
         border-radius: 8px;
         margin-bottom: 20px;
@@ -663,14 +663,14 @@ def create_theme_count_chart(works_count_data, current_theme=None):
         )
         # Set chart title under unified style
         fig.update_layout(
-            title='Outputs Count by Clusters',
+            title='Number of Outputs Delivered by Cluster',
             title_font_size=20,
             title_x=0.5,
             title_xanchor='center'
         )
     else:
         fig.update_layout(
-            title='Outputs Count by Clusters',
+            title='Number of Outputs Delivered by Cluster',
             title_font_size=20,
             title_x=0.5,
             title_xanchor='center',
@@ -798,8 +798,8 @@ def create_theme_detail_list(data_processor, question):
                 hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
             ))
             fig.update_layout(
-                xaxis_title='Count',
-                yaxis_title='Category'
+                xaxis_title='',  # 删除X轴标签
+                yaxis_title=''   # 删除Y轴标签
             )
         else:  # bar chart
             fig.add_trace(go.Bar(
@@ -809,8 +809,8 @@ def create_theme_detail_list(data_processor, question):
                 hovertemplate='<b>%{x}</b><br>Count: %{y}<extra></extra>'
             ))
             fig.update_layout(
-                xaxis_title='Category',
-                yaxis_title='Count'
+                xaxis_title='',  # 删除X轴标签
+                yaxis_title=''   # 删除Y轴标签
             )
         
         fig.update_layout(
@@ -879,26 +879,54 @@ def create_layout():
         },
         "Knowledge Development & Dissemination": {
             "title": "📚 Knowledge Development & Dissemination",
-            "subtitle": "Analysis of knowledge development and dissemination outputs"
+            "subtitle": """This tab highlights the ILO's efforts to generate, analyse and share **evidence-based knowledge** to guide the design and implementation of **youth employment strategies**.
+
+Activities reported under this cluster include trends and diagnostics studies, **labour market analyses**, and research on **future-of-work trends** and their impact on young people.
+
+Outputs also cover the production and dissemination of **publications, tools and knowledge products**, shared through platforms such as [Youth Foresight](https://www.youthforesight.org/).
+
+**Additional resources:**
+- [Youth employment | International Labour Organization](https://www.ilo.org/topics-and-sectors/youth-employment)
+- [Global Employment Trends for Youth 2024 | International Labour Organization](https://www.ilo.org/publications/major-publications/global-employment-trends-youth-2024)
+- [Statistics on youth - ILOSTAT](https://ilostat.ilo.org/topics/youth/)
+- [Active Labour Market Programs Improve Employment and Earnings of Young People | International Labour Organization](https://www.ilo.org/publications/active-labour-market-programs-improve-employment-and-earnings-young-people)"""
         },
         "Technical Assistance": {
             "title": "🔧 Technical Assistance", 
-            "subtitle": "Analysis of technical assistance outputs and delivery"
+            "subtitle": """This tab highlights the ILO's technical support to countries in developing and implementing **gender-responsive youth employment policies and strategies**.
+
+Activities include support for **national employment policies**, **entrepreneurship programmes**, **job creation measures**, and **social protection for youth**. It also covers policy responses to **future-of-work trends**, such as **technology, climate change**, and the **care economy**, as well as efforts to promote **equal opportunities**, **rights at work**, and a **just transition**.
+
+**Additional resources:**
+- [Youth at the centre of employment policies | International Labour Organization](https://www.ilo.org/resource/article/youth-centre-employment-policies)
+- [ILO Employment Policy Gateway](https://webapps.ilo.org/empolgateway/)
+- [Employment promotion | International Labour Organization](https://www.ilo.org/topics-and-sectors/employment-promotion)"""
         },
         "Capacity Development": {
             "title": "🎓 Capacity Development",
-            "subtitle": "Analysis of capacity development programs and outcomes"
+            "subtitle": """This tab highlights ILO's support to **strengthen the capacities** of governments, employers, workers' organizations, and partners to design and implement effective youth employment interventions.
+
+Activities include **training initiatives** on youth employment, **digital and soft skills development**, and **apprenticeships**. It also covers **social dialogue**, **youth participation in policy-making**, and **youth employment programme assessments** to improve policy effectiveness.
+
+The ILO promotes **knowledge exchange**, **institutional strengthening**, and **tripartite collaboration** to advance inclusive and sustainable employment for youth.
+
+**Additional resources:**
+- [Youth employment | ITCILO](https://www.itcilo.org/topics/youth-employment)"""
         },
         "Advocacy & Partnerships": {
             "title": "🤝 Advocacy & Partnerships",
-            "subtitle": "Analysis of advocacy initiatives and partnership activities"
+            "subtitle": """This tab highlights the ILO's efforts to advance **global leadership on youth employment** through **strategic partnerships and advocacy** at global, regional, and national levels.
+
+Activities include collaboration through the [Global Initiative on Decent Jobs for Youth](https://www.decentjobsforyouth.org/), partnerships with UN agencies, donors, and youth organizations, and engagement in G7, G20, and UN forums.
+
+At country level, work focuses on **joint programmes**, **communication**, and **resource mobilization** to scale up action for **decent work for youth**."""
         }
     }
     
     # Display page-specific title and subtitle
     current_page = page_titles.get(selected_section, page_titles["Outputs Count Statistics"])
     st.title(current_page["title"])
-    st.markdown(f"**{current_page['subtitle']}**")
+    st.markdown(current_page['subtitle'])
     st.markdown("---")
 
     # Add region filtering functionality - moved before data processor initialization
@@ -1055,17 +1083,17 @@ def create_layout():
             'title': '📚 Knowledge Development & Dissemination',
             'color': '#f0f8ff',
             'charts': [
-                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Knowledge Development And Dissemination Outputs In 2024'),
-                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Knowledge Development And Dissemination Outputs In 2024'),
-                ('Type of publication (Options: Evaluation, or Guidance/tools, or Technical Report, or Working paper, or Data/Database) ', 'bar', 'Types Of Knowledge Development And Dissemination Outputs Delivered In 2024')
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Knowledge Development And Dissemination Outputs'),
+                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Knowledge Development And Dissemination Outputs'),
+                ('Type of publication (Options: Evaluation, or Guidance/tools, or Technical Report, or Working paper, or Data/Database) ', 'bar', 'Types Of Knowledge Development And Dissemination Outputs Delivered')
             ]
         },
         'Q7': {
             'title': '🔧 Technical Assistance',
             'color': '#f0fff0',
             'charts': [
-                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Technical Assistance Outputs In 2024'),
-                ('Focus \n(Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Technical Assistance Outputs In 2024'),
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Technical Assistance Outputs'),
+                ('Focus \n(Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Technical Assistance Outputs'),
                 ('Country or Region', 'bar', 'Technical Assistance Outputs Across Regions')
             ]
         },
@@ -1073,20 +1101,20 @@ def create_layout():
             'title': '🎓 Capacity Development',
             'color': '#fff8f0',
             'charts': [
-                ('In person or online or both', 'pie', 'Delivery Mode Of Capacity Development Outputs In 2024'),
-                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Capacity Development Outputs In 2024'),
+                ('In person or online or both', 'pie', 'Delivery Mode Of Capacity Development Outputs'),
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Capacity Development Outputs'),
                 ('With certification (Yes or No)', 'pie', 'Capacity Development Outputs & Certification'),
-                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Capacity Development Outputs In 2024')
+                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Capacity Development Outputs')
             ]
         },
         'Q11': {
             'title': '🤝 Advocacy & Partnerships',
             'color': '#fdf0ff',
             'charts': [
-                ('Type of partnership\n(Options: UN interagency initiative; or multistakeholder initiative; or bilateral partnership; or event; or campaign; or challenge)', 'bar', 'Types Of Advocacy Or Partnership Outputs In 2024'),
-                ('Focus\n (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group For Advocacy & Partnerships Outputs In 2024'),
+                ('Type of partnership\n(Options: UN interagency initiative; or multistakeholder initiative; or bilateral partnership; or event; or campaign; or challenge)', 'bar', 'Types Of Advocacy Or Partnership Outputs'),
+                ('Focus\n (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group For Advocacy & Partnerships Outputs'),
                 ('Specify name of the Region/country', 'bar', 'Advocacy & Partnership Outputs Across Regions'),
-                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Advocacy & Partnerships Related Outputs In 2024'),
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Advocacy & Partnerships Related Outputs'),
                 ('Geographical focus (Global, Regional  or National/local)', 'pie', 'Geographical Focus Of Advocacy And Partnerships Outputs')
             ]
         }
