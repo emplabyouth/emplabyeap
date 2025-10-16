@@ -22,7 +22,7 @@ def check_environment():
     """Check runtime environment"""
     # Check if we're in the correct directory
     if not Path("streamlit").exists():
-        print("❌ Error: Please run this script from the YEAP-9-19 project root directory")
+        print("❌ Error: Please run this script from the yeap-10-10 project root directory")
         print(f"Current directory: {os.getcwd()}")
         input("Press Enter to exit...")
         sys.exit(1)
