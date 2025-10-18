@@ -6,16 +6,16 @@ This document defines the complete color scheme for the dashboard
 
 # Primary Color Configuration
 PRIMARY_COLOR = "rgb(30, 45, 190)"  # Primary Color
-SECONDARY_COLOR = "rgb(200, 48, 60)"  # Secondary Color
+SECONDARY_COLOR = "rgb(250, 60, 75)"  # Secondary Color
 
 # Chart and Bar Chart Color Configuration
 CHART_COLORS = [
     "rgb(30, 45, 190)",    # Primary Color
-    "rgb(200, 48, 60)",    # Secondary Color
-    "rgb(5, 189, 189)",    # Cyan
-    "rgb(228, 148, 40)",   # Orange
+    "rgb(250, 60, 75)",    # Secondary Color
+    "rgb(5, 210, 210)",    # Cyan
+    "rgb(255, 205, 45)",   # Orange
     "rgb(150, 10, 85)",    # Magenta
-    "rgb(84, 135, 60)"     # Green
+    "rgb(140, 225, 100)"   # Green
 ]
 
 # Frequency Analysis Gradient Color Configuration
@@ -31,15 +31,15 @@ FREQUENCY_GRADIENT_COLORS = [
 
 # Hexadecimal Format Colors
 PRIMARY_COLOR_HEX = "#1E2DBE"
-SECONDARY_COLOR_HEX = "#C8303C"
+SECONDARY_COLOR_HEX = "#FA3C4B"
 
 CHART_COLORS_HEX = [
     "#1E2DBE",  # Primary Color
-    "#C8303C",  # Secondary Color
-    "#05BDBD",  # Cyan
-    "#E49428",  # Orange
+    "#FA3C4B",  # Secondary Color
+    "#05D2D2",  # Cyan
+    "#FFCD2D",  # Orange
     "#960A55",  # Magenta
-    "#54873C"   # Green
+    "#8CE164"   # Green
 ]
 
 # Color Usage Description

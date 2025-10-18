@@ -14,7 +14,7 @@ try:
 except ImportError:
     STYLES_AVAILABLE = False
     # Define backup colors - Updated with new color scheme
-STANDARD_COLORS = ['#1E2DBE', '#C8303C', '#05BDBD', '#E49428', '#960A55', '#54873C', '#34495E', '#F1C40F', '#E67E22', '#95A5A6']
+STANDARD_COLORS = ['#1E2DBE', '#FA3C4B', '#05D2D2', '#FFCD2D', '#960A55', '#8CE164', '#34495E', '#F1C40F', '#E67E22', '#95A5A6']
 
 def safe_read_csv(file_path: str, **kwargs) -> pd.DataFrame:
     """Safely read CSV file with multiple encoding attempts"""
@@ -79,10 +79,10 @@ def create_unified_header():
             justify-content: center;
             line-height: 1.2;
         ">
-            <div style="font-size: 2.0rem; font-weight: 600; margin-bottom: 5px;">
+            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.8rem; font-weight: 700; margin-bottom: 5px;">
                 {main_title}
             </div>
-            <div style="font-size: 1.4rem; font-weight: 400;">
+            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.8rem; font-weight: 300;">
                 {year_title}
             </div>
         </div>
@@ -462,19 +462,16 @@ class Q6Q7Q10Q11DataProcessor:
         try:
             # Use filtered combined_data to ensure response region filtering
             if self.combined_data is None or self.combined_data.empty:
-                st.warning(f"No combined data available for {question}")
                 return {}
             
             # Get data for specified question from filtered data
             question_data = self.combined_data[self.combined_data['Question'] == question]
             
             if question_data.empty:
-                st.info(f"No data found for question {question}")
                 return {}
             
             # Check if field exists
             if field_name not in question_data.columns:
-                st.warning(f"Field '{field_name}' not found in {question} data. Available columns: {list(question_data.columns)}")
                 return {}
             
             # Data standardization processing
@@ -486,7 +483,6 @@ class Q6Q7Q10Q11DataProcessor:
             field_data = field_data[field_data.astype(str).str.strip() != 'nan']
             
             if field_data.empty:
-                st.info(f"No valid data found for field '{field_name}' in {question} after filtering")
                 return {}
             
             # Standardization processing: remove extra spaces, unify case format
@@ -681,7 +677,7 @@ def create_theme_count_chart(works_count_data, current_theme=None):
             margin=dict(b=120),
             paper_bgcolor='white',
             plot_bgcolor='white',
-            font_family="Arial",
+            font_family="Noto Sans",
             xaxis=dict(
                 tickangle=0,
                 tickmode='array',
@@ -821,8 +817,10 @@ def create_theme_detail_list(data_processor, question):
             height=400,
             paper_bgcolor='white',
             plot_bgcolor='white',
-            font_family="Arial"
+            font_family="'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         )
+        # Keep chart title in Overpass
+        fig.update_layout(title={'text': title, 'font': {'family': "'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"}})
         
         return fig
 
@@ -860,9 +858,10 @@ def create_layout():
         apply_page_style()
     else:
         st.set_page_config(
-            page_title="Q6Q7Q10Q11 Analysis Dashboard",
+            page_title="ILO Youth Employment Action Plan (YEAP)",
             page_icon="📊",
-            layout="wide"
+            layout="wide",
+            initial_sidebar_state="expanded"
         )
     
     # Define base_path
@@ -925,7 +924,7 @@ At country level, work focuses on **joint programmes**, **communication**, and *
     
     # Display page-specific title and subtitle
     current_page = page_titles.get(selected_section, page_titles["Outputs Count Statistics"])
-    st.title(current_page["title"])
+    st.subheader(current_page["title"])
     st.markdown(current_page['subtitle'])
     st.markdown("---")
 
@@ -1073,9 +1072,22 @@ At country level, work focuses on **joint programmes**, **communication**, and *
         st.warning("No data available to display. Please ensure the data files are in the correct location.")
         return
 
-
     # Get works count data for all themes
     works_count_data = data_processor.get_works_count_data()
+    
+    # Check if any meaningful data exists for display
+    has_any_data = False
+    if works_count_data:
+        # Check if any theme has valid data
+        for theme_data in works_count_data.values():
+            if theme_data.get('valid_works', 0) > 0:
+                has_any_data = True
+                break
+    
+    # If no meaningful data exists, show single warning and return
+    if not has_any_data:
+        st.warning("No data available")
+        return
     
     # Define theme information
     themes = {
@@ -1127,10 +1139,7 @@ At country level, work focuses on **joint programmes**, **communication**, and *
             count_fig = create_theme_count_chart(works_count_data, current_theme=None)
             if count_fig:
                 st.plotly_chart(count_fig, use_container_width=True)
-            else:
-                st.info("No count statistics data available.")
-        else:
-            st.info("No count statistics data available.")
+        # Note: Removed redundant warning messages as they are handled at the top level
     
     else:
         # Find the corresponding theme for the selected section
@@ -1162,53 +1171,58 @@ At country level, work focuses on **joint programmes**, **communication**, and *
                 count_fig = create_theme_count_chart(works_count_data, current_theme=current_theme)
                 if count_fig:
                     st.plotly_chart(count_fig, use_container_width=True)
-                else:
-                    st.info("No count statistics data available.")
-            else:
-                st.info("No count statistics data available.")
+            # Note: Removed redundant warning messages as they are handled at the top level
             
             st.markdown("---")  # Add separator
         
         # Section 2: Frequency Analysis
         st.subheader("📊 Frequency Analysis")
         
+        # Check if any frequency data exists for this theme
+        has_frequency_data = False
         for field_name, chart_type, chart_title in theme_info['charts']:
             field_data = data_processor.get_field_distribution(question, field_name)
             if field_data:
-                # Special handling for Q7 and Q11 region data (top 10)
-                if 'Region' in chart_title or 'Regions' in chart_title:
-                    sorted_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
-                    field_data = sorted_data
-                
-                # Special handling for Q11 partnership types with custom order
-                if question == 'Q11' and 'Type of partnership' in field_name:
-                    custom_order = [
-                        'multistakeholder initiative',
-                        'bilateral partnership',
-                        'UN interagency initiative',
-                        'campaign',
-                        'event',
-                        'challenge'
-                    ]
+                has_frequency_data = True
+                break
+        
+        if has_frequency_data:
+            for field_name, chart_type, chart_title in theme_info['charts']:
+                field_data = data_processor.get_field_distribution(question, field_name)
+                if field_data:
+                    # Special handling for Q7 and Q11 region data (top 10)
+                    if 'Region' in chart_title or 'Regions' in chart_title:
+                        sorted_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
+                        field_data = sorted_data
                     
-                    ordered_data = {}
-                    for item in custom_order:
-                        if item in field_data:
-                            ordered_data[item] = field_data[item]
+                    # Special handling for Q11 partnership types with custom order
+                    if question == 'Q11' and 'Type of partnership' in field_name:
+                        custom_order = [
+                            'multistakeholder initiative',
+                            'bilateral partnership',
+                            'UN interagency initiative',
+                            'campaign',
+                            'event',
+                            'challenge'
+                        ]
+                        
+                        ordered_data = {}
+                        for item in custom_order:
+                            if item in field_data:
+                                ordered_data[item] = field_data[item]
+                        
+                        for key, value in field_data.items():
+                            if key not in ordered_data:
+                                ordered_data[key] = value
+                        
+                        field_data = ordered_data
+                        preserve_order = True
+                    else:
+                        preserve_order = False
                     
-                    for key, value in field_data.items():
-                        if key not in ordered_data:
-                            ordered_data[key] = value
-                    
-                    field_data = ordered_data
-                    preserve_order = True
-                else:
-                    preserve_order = False
-                
-                fig = create_chart(pd.Series(field_data), chart_type, chart_title, preserve_order=preserve_order)
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info(f"No data available for {chart_title.lower()}")
+                    fig = create_chart(pd.Series(field_data), chart_type, chart_title, preserve_order=preserve_order)
+                    st.plotly_chart(fig, use_container_width=True)
+        # Note: Removed individual chart warning messages as they are handled at the top level
         
         # Section 3: Outputs Detail List
         st.subheader("📋 Outputs Detail List")
@@ -1278,8 +1292,7 @@ At country level, work focuses on **joint programmes**, **communication**, and *
                     st.rerun()
             
             # Navigation buttons removed; use Jump to page for pagination.
-        else:
-            st.info(f"No detail data available for {theme_info['title']}")
+        # Note: Removed redundant warning message as it's handled at the top level
 
 if __name__ == "__main__":
     create_layout()

@@ -111,7 +111,7 @@ def create_q2_chart(data):
         height=400,
         paper_bgcolor='white',
         plot_bgcolor='white',
-        font_family="Arial",
+        font_family="Noto Sans",
         margin=dict(t=60, b=20, l=20, r=20),
         autosize=True
     )
@@ -615,7 +615,7 @@ def create_html_table_with_headers(df, original_data, table_type="Department"):
         border-collapse: collapse;
         width: 100%;
         margin: 20px 0;
-        font-family: Arial, sans-serif;
+        font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
         font-size: 13px;
         table-layout: fixed;
     }}
@@ -853,7 +853,7 @@ def create_html_table_with_headers_transposed(df, original_data, table_type="Dep
         border-collapse: collapse;
         width: 100%;
         margin: 20px 0;
-        font-family: Arial, sans-serif;
+        font-family: 'Noto Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: 13px;
         table-layout: fixed;
     }}
@@ -1138,10 +1138,10 @@ def create_layout():
             justify-content: center;
             line-height: 1.2;
         ">
-            <div style="font-size: 2.0rem; font-weight: 600; margin-bottom: 5px;">
+            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.8rem; font-weight: 700; margin-bottom: 5px;">
                 {main_title}
             </div>
-            <div style="font-size: 1.4rem; font-weight: 400;">
+            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.8rem; font-weight: 300;">
                 {year_title}
             </div>
         </div>
@@ -1149,7 +1149,7 @@ def create_layout():
     """, unsafe_allow_html=True)
     
     # Add Q2 pie chart as the first chart
-    st.title("📊 General Overview")
+    st.subheader("📊 General Overview")
     st.markdown("""
 This dashboard presents key findings from the **ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey**, based on inputs from ILO staff across the globe.
 
@@ -1173,7 +1173,7 @@ It is organized in six tabs:
 
 • [YEAP 2020–2030](https://www.ilo.org/resource/policy/ilos-youth-employment-action-plan-yeap-2020-30)  
 • [Youth Employment Crisis: A Call for Action (ILC, 2012)](https://www.ilo.org/sites/default/files/wcmsp5/groups/public/%40ed_norm/%40relconf/documents/meetingdocument/wcms_185950.pdf)
-""")
+""", unsafe_allow_html=True)
     st.markdown("---")
     
     # Load and display Q2 data
@@ -1233,6 +1233,36 @@ It is organized in six tabs:
                 st.warning("No Region data available for transposed view")
     else:
         st.warning("No Q3-Q4-Q5 data available")
+    
+    st.markdown("---")
+    
+    # Add Clusters Of The Implementation Framework section
+    st.subheader("📊 Clusters Of The Implementation Framework")
+    st.markdown("Overview of output counts across all analysis areas")
+    
+    # Import and use the chart creation function from st_q6q7q10q11_dashboard
+    try:
+        from st_q6q7q10q11_dashboard import Q6Q7Q10Q11DataProcessor, create_theme_count_chart
+        
+        # Initialize data processor
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_processor = Q6Q7Q10Q11DataProcessor(base_path)
+        
+        # Get works count data
+        works_count_data = data_processor.get_works_count_data()
+        
+        if works_count_data:
+            # Create and display the chart
+            count_fig = create_theme_count_chart(works_count_data, current_theme=None)
+            if count_fig:
+                st.plotly_chart(count_fig, use_container_width=True)
+            else:
+                st.info("Chart could not be generated")
+        else:
+            st.info("No data available for Clusters Of The Implementation Framework")
+            
+    except Exception as e:
+        st.error(f"Error loading Clusters data: {e}")
     
     st.markdown("---")
     st.write("Use the sidebar to select period and navigate other dashboards.")

@@ -4,7 +4,12 @@ import st_landing_dashboard
 import os
 import pandas as pd
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="ILO Youth Employment Action Plan (YEAP)",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 
 def safe_read_csv(file_path):
@@ -39,7 +44,6 @@ except Exception:
 
 PAGES = {
     "🏠 Overview": st_landing_dashboard,
-    "📊 Clusters Of The Implementation Framework": st_q6q7q10q11_dashboard,
     "📚 Knowledge Development & Dissemination": st_q6q7q10q11_dashboard,
     "🔧 Technical Assistance": st_q6q7q10q11_dashboard,
     "🎓 Capacity Development": st_q6q7q10q11_dashboard,
@@ -115,7 +119,6 @@ except Exception as e:
 # ---------------- Global shared filters (Organizational Unit) ----------------
 # Check if any of the specialized analysis pages are selected
 specialized_pages = [
-    "📊 Clusters Of The Implementation Framework",
     "📚 Knowledge Development & Dissemination", 
     "🔧 Technical Assistance",
     "🎓 Capacity Development",
@@ -173,7 +176,6 @@ if selection in specialized_pages:  # Any specialized analysis page needs region
 if selection in specialized_pages:
     # Map page selection to analysis section
     page_to_section = {
-        "📊 Clusters Of The Implementation Framework": "Outputs Count Statistics",
         "📚 Knowledge Development & Dissemination": "Knowledge Development & Dissemination",
         "🔧 Technical Assistance": "Technical Assistance", 
         "🎓 Capacity Development": "Capacity Development",
@@ -189,3 +191,9 @@ if hasattr(page, 'create_layout'):
     page.create_layout()
 else:
     st.error("The selected page does not have a create_layout function.")
+
+# Re-apply global styles at end so our <style> appears last
+try:
+    _apply_global_style()
+except Exception:
+    pass
