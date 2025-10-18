@@ -7,11 +7,10 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 
 ### 页面结构 Page Structure
 1. **🏠 Overview** - 调查概览页面
-2. **📊 Outputs Count Statistics** - 产出统计页面
-3. **📚 Knowledge Development & Dissemination** - 知识发展与传播分析
-4. **🔧 Technical Assistance** - 技术援助分析
-5. **🎓 Capacity Development** - 能力发展分析
-6. **🤝 Advocacy & Partnerships** - 倡导与合作伙伴关系分析
+2. **📚 Knowledge Development & Dissemination** - 知识发展与传播分析
+3. **🔧 Technical Assistance** - 技术援助分析
+4. **🎓 Capacity Development** - 能力发展分析
+5. **🤝 Advocacy & Partnerships** - 倡导与合作伙伴关系分析
 
 ## 🏠 Overview 页面 (调查概览)
 
