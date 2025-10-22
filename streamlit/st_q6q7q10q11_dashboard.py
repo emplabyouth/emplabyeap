@@ -63,14 +63,16 @@ def create_unified_header():
         display: flex;
         align-items: center;
         gap: 15px;
-        height: 120px;
+        min-height: 80px;
+        width: 100%;
+        box-sizing: border-box;
     ">
-        <div style="flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center;">
+        <div style="flex: 0 0 auto; max-width: 180px; min-width: 80px; display: flex; align-items: center; justify-content: center;">
               <img src="data:image/png;base64,{get_base64_image(logo_path)}" 
-                   style="width: 100%; height: auto; display: block;">
+                   style="width: 100%; height: auto; display: block; max-height: 60px;">
           </div>
         <div style="
-            flex: 3;
+            flex: 1;
             color: white;
             text-align: center;
             display: flex;
@@ -78,11 +80,29 @@ def create_unified_header():
             align-items: center;
             justify-content: center;
             line-height: 1.2;
+            padding: 10px;
+            overflow: hidden;
         ">
-            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 2.8rem; font-weight: 700; margin-bottom: 5px;">
+            <div style="
+                font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                font-size: clamp(1.2rem, 4vw, 2.8rem); 
+                font-weight: 700; 
+                margin-bottom: 5px;
+                word-wrap: break-word;
+                hyphens: auto;
+                text-align: center;
+                width: 100%;
+            ">
                 {main_title}
             </div>
-            <div style="font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.8rem; font-weight: 300;">
+            <div style="
+                font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                font-size: clamp(0.9rem, 2.5vw, 1.8rem); 
+                font-weight: 300;
+                word-wrap: break-word;
+                text-align: center;
+                width: 100%;
+            ">
                 {year_title}
             </div>
         </div>
@@ -640,13 +660,14 @@ def create_theme_count_chart(works_count_data, current_theme=None):
     
     # Apply style configuration
     if STYLES_AVAILABLE:
-        layout_config = style_manager.get_global_chart_config('layout')
+        layout_config = style_manager.get_global_chart_config('layout').copy()
+        # Override margin to ensure enough space for wrapped labels
+        layout_config['margin'] = dict(l=40, r=40, t=60, b=120)
         fig.update_layout(
             xaxis_title='',  # Hide x-axis title
             yaxis_title='',  # Hide y-axis title
             barmode='group',
             height=500,
-            margin=dict(b=120),
             xaxis=dict(
                 tickangle=0,
                 tickmode='array',
