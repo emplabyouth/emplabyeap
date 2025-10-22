@@ -21,16 +21,16 @@ def print_banner():
 def check_environment():
     """Check runtime environment"""
     # Check if we're in the correct directory
-    if not Path("streamlit").exists():
-        print("❌ Error: Please run this script from the yeap-10-10 project root directory")
+    if not Path("orignaldata").exists():
+        print("❌ Error: Please run this script from the project root directory")
         print(f"Current directory: {os.getcwd()}")
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Check if streamlit_app.py exists
-    streamlit_app = Path("streamlit/streamlit_app.py")
+    # Check if streamlit_app.py exists in root directory
+    streamlit_app = Path("streamlit_app.py")
     if not streamlit_app.exists():
-        print("❌ Error: streamlit_app.py not found in streamlit directory")
+        print("❌ Error: streamlit_app.py not found in root directory")
         input("Press Enter to exit...")
         sys.exit(1)
     
@@ -59,11 +59,8 @@ def start_streamlit():
     print("=" * 50)
     print()
     
-    # Change to streamlit directory
-    os.chdir("streamlit")
-    
     try:
-        # Start Streamlit application
+        # Start Streamlit application from root directory
         subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit_app.py"], check=True)
     except subprocess.CalledProcessError as e:
         print()

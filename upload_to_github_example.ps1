@@ -7,8 +7,8 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if we're in the correct directory
-if (-not (Test-Path "streamlit")) {
-    Write-Host "Error: Please run this script from the yeap-10-10 project root directory" -ForegroundColor Red
+if (-not (Test-Path "orignaldata")) {
+    Write-Host "Error: Please run this script from the project root directory" -ForegroundColor Red
     Write-Host "Current directory: $(Get-Location)" -ForegroundColor Yellow
     Read-Host "Press Enter to exit"
     exit 1
@@ -73,7 +73,7 @@ try {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "Upload completed successfully!" -ForegroundColor Green
     Write-Host "Your YEAP Dashboard has been uploaded to:" -ForegroundColor Green
-    Write-Host "https://github.com/your_username/your_repository.git" -ForegroundColor Blue
+    Write-Host "https://github.com/emplabyouth/emplabyeap.git" -ForegroundColor Blue
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Streamlit Cloud should automatically update within a few minutes." -ForegroundColor Yellow
