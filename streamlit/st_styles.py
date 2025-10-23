@@ -38,11 +38,12 @@ class StreamlitStyleManager:
                         'color': '#1f1f1f'
                     },
                     'x': 0.5,  # 标题居中
-                    'xanchor': 'center'  # 标题锚点居中
+                    'xanchor': 'center',  # 标题锚点居中
+                    'pad': {'b': 10}
                 },
                 'paper_bgcolor': 'rgba(0,0,0,0)',
                 'plot_bgcolor': 'rgba(0,0,0,0)',
-                'margin': dict(l=40, r=40, t=60, b=40)
+                'margin': dict(l=40, r=40, t=70, b=40)
             }
         }
     
@@ -207,7 +208,7 @@ class StreamlitStyleManager:
         """提供与可视化层兼容的主题结构"""
         return {'layout': self.global_chart_config['layout']}
 
-    def _wrap_title(self, title: str, max_chars: int = 60) -> str:
+    def _wrap_title(self, title: str, max_chars: int = 120) -> str:
         """换行长标题以避免溢出"""
         if not title:
             return ''
