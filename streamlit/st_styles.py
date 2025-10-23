@@ -75,14 +75,17 @@ class StreamlitStyleManager:
         /* 正文字体工具类与通用应用 */
         .yeap-body-text, .yeap-body-text p, .yeap-body-text li, .yeap-body-text span {{
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-            font-size: 13px;
+            font-size: 15px;
             line-height: 1.6;
             color: #333333;
         }}
 
-        /* 默认 Markdown 正文字体同步 */
+        /* 默认 Markdown 正文字体同步（与 yeap-body-text 保持一致） */
         .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span, .markdown-text-container {{
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333333;
         }}
 
         /* 根变量 */
