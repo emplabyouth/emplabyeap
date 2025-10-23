@@ -39,13 +39,36 @@ except ImportError:
                         values=list(data.values()),
                         marker_colors=self.get_chart_colors()[:len(data)]
                     ))
+                    # 为饼图添加居中配置
+                    fig.update_layout(
+                        title=title, 
+                        height=400,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="top",
+                            y=1,
+                            xanchor="left",
+                            x=1.02,
+                            bgcolor="rgba(255,255,255,0.9)",
+                            bordercolor="rgba(0,0,0,0.2)",
+                            borderwidth=1,
+                            font=dict(size=12),
+                            itemwidth=30,
+                            tracegroupgap=5,
+                            itemsizing="constant",
+                            entrywidth=120,
+                            entrywidthmode="pixels"
+                        ),
+                        margin=dict(l=20, r=260, t=60, b=20),
+                        autosize=True
+                    )
                 else:
                     fig.add_trace(go.Bar(
                         x=list(data.keys()),
                         y=list(data.values()),
                         marker_color=self.get_chart_colors()[0]
                     ))
-                fig.update_layout(title=title, height=400)
+                    fig.update_layout(title=title, height=400)
             return fig
     
     style_manager = StyleManager()
@@ -127,9 +150,27 @@ class Visualizer:
         
         fig.update_layout(
             title=title,
-            showlegend=True,
-            height=kwargs.get('height', 400)
+            showlegend=False,
+            height=kwargs.get('height', 400),
+            margin=dict(l=20, r=180, t=60, b=20),
+            autosize=True
         )
+        # 添加自定义纵向固定宽度图例（文本换行、逐行显示）
+        try:
+            self.style_manager.add_fixed_width_vertical_legend(
+                fig,
+                labels=labels,
+                colors=colors[:len(labels)],
+                x=0.88,
+                y=1.0,
+                max_chars=14,
+                font_size=12,
+                row_gap=0.06,
+                draw_box=False
+            )
+        except Exception:
+            # 如果样式管理器没有该方法，则保留无内置图例的图表
+            pass
         
         return fig
     

@@ -72,6 +72,19 @@ class StreamlitStyleManager:
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }}
 
+        /* 正文字体工具类与通用应用 */
+        .yeap-body-text, .yeap-body-text p, .yeap-body-text li, .yeap-body-text span {{
+            font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333333;
+        }}
+
+        /* 默认 Markdown 正文字体同步 */
+        .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span, .markdown-text-container {{
+            font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        }}
+
         /* 根变量 */
         :root {{
             --primary-color: {self.theme_colors['primary']};
@@ -207,6 +220,81 @@ class StreamlitStyleManager:
             parts.append(line)
         return '<br>'.join(parts)
 
+    # 自定义：固定宽度纵向图例（使用注释模拟）
+    def _wrap_legend_text(self, text: str, max_chars: int = 18) -> str:
+        """按字符数进行简单换行，返回带<br>的文本"""
+        words = str(text).split()
+        lines = []
+        current = ''
+        for w in words:
+            if len(current) + len(w) + (1 if current else 0) <= max_chars:
+                current = f"{current} {w}".strip()
+            else:
+                if current:
+                    lines.append(current)
+                current = w
+        if current:
+            lines.append(current)
+        return '<br>'.join(lines)
+
+    def add_fixed_width_vertical_legend(self, fig: go.Figure, labels: List[str], colors: List[str], *,
+                                        x: float = 0.88, y: float = 1.0, max_chars: int = 18,
+                                        font_size: int = 12, row_gap: float = 0.06, draw_box: bool = False) -> None:
+        """
+        在图右侧添加自定义纵向图例：
+        - 固定文本宽度（按字符数近似），超过部分自动换行
+        - 每个图例项独占一行，高度自适应
+        - 使用注释表示文本，使用 shape 绘制彩色方块，避免重叠
+        """
+        # 预先计算行数以便估算盒子高度
+        wrapped_labels = [self._wrap_legend_text(lbl, max_chars=max_chars) for lbl in labels]
+        total_lines = sum(wl.count('<br>') + 1 for wl in wrapped_labels)
+
+        # 起始位置（paper坐标, 保持在画布内）
+        y_cursor = y
+        x_text = x
+        symbol_x = x_text - 0.03  # 彩色方块靠左
+        symbol_w = 0.015
+        symbol_h = 0.02
+        for idx, wrapped in enumerate(wrapped_labels):
+            # 文本注释
+            fig.add_annotation(
+                xref='paper', yref='paper',
+                x=x_text, y=y_cursor,
+                text=wrapped,
+                showarrow=False,
+                align='left',
+                xanchor='left',
+                yanchor='middle',
+                font=dict(size=font_size, color='#333'),
+            )
+            # 彩色方块（改为shape矩形，更好对齐）
+            fig.add_shape(
+                type='rect',
+                xref='paper', yref='paper',
+                x0=symbol_x, x1=symbol_x + symbol_w,
+                y0=y_cursor - symbol_h/2, y1=y_cursor + symbol_h/2,
+                line=dict(width=0),
+                fillcolor=colors[idx % len(colors)],
+                layer='above'
+            )
+            # 根据行数下移游标
+            lines = wrapped.count('<br>') + 1
+            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.6)
+
+        if draw_box:
+            # 绘制一个包含所有图例的矩形框（保持在画布范围内）
+            height_est = total_lines * row_gap + 0.04
+            fig.add_shape(
+                type="rect",
+                xref="paper", yref="paper",
+                x0=max(0.0, symbol_x - 0.02), y0=min(1.0, y + 0.02),
+                x1=min(0.995, x_text + 0.18), y1=max(0.0, y - height_est),
+                line=dict(color="rgba(0,0,0,0.2)", width=1),
+                fillcolor="rgba(255,255,255,0.9)",
+                layer="below"
+            )
+
     def create_standardized_chart(self, data, chart_type: str, title: str, preserve_order: bool = False) -> go.Figure:
         """标准化图表创建，统一样式，支持 pie/bar/horizontal_bar，对区域图表使用渐变色"""
         # 支持 Series 或 dict
@@ -302,6 +390,24 @@ class StreamlitStyleManager:
                     values=values,
                     marker_colors=colors[:len(labels)]
                 )])
+                # 禁用内置图例，改用自定义纵向固定宽度图例
+                fig.update_layout(
+                    margin=dict(l=20, r=180, t=60, b=20),
+                    autosize=True,
+                    showlegend=False
+                )
+                # 添加自定义图例（固定宽度，文本可换行，逐行显示）
+                self.add_fixed_width_vertical_legend(
+                    fig,
+                    labels=labels,
+                    colors=colors[:len(labels)],
+                    x=0.88,
+                    y=1.0,
+                    max_chars=14,
+                    font_size=12,
+                    row_gap=0.06,
+                    draw_box=False
+                )
             elif chart_type == 'horizontal_bar':
                 fig = go.Figure(data=[go.Bar(
                     x=values,
@@ -361,3 +467,56 @@ def create_metrics(metrics: List[Dict[str, Any]]) -> List[str]:
 def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go.Figure:
     preserve_order = kwargs.get('preserve_order', False)
     return style_manager.create_standardized_chart(data, chart_type, title, preserve_order=preserve_order)
+
+
+    # 自定义：固定宽度纵向图例（使用注释模拟）
+    def _wrap_legend_text(self, text: str, max_chars: int) -> str:
+        """按字符数进行简单换行，返回带<br>的文本"""
+        words = str(text).split()
+        lines = []
+        current = ''
+        for w in words:
+            if len(current) + len(w) + (1 if current else 0) <= max_chars:
+                current = f"{current} {w}".strip()
+            else:
+                if current:
+                    lines.append(current)
+                current = w
+        if current:
+            lines.append(current)
+        return '<br>'.join(lines)
+
+    def add_fixed_width_vertical_legend(self, fig: go.Figure, labels: List[str], colors: List[str], *,
+                                        x: float = 1.02, y: float = 1.0, max_chars: int = 24,
+                                        font_size: int = 12, row_gap: float = 0.05) -> None:
+        """
+        在图右侧添加自定义纵向图例：
+        - 固定文本宽度（按字符数近似），超过部分自动换行
+        - 每个图例项单独一行，高度自适应
+        - 使用注释表示彩色方块和文本
+        """
+        # 起始位置（paper坐标）
+        y_cursor = y
+        symbol_x = x - 0.02  # 彩色方块靠左
+        for idx, label in enumerate(labels):
+            wrapped = self._wrap_legend_text(label, max_chars=max_chars)
+            # 文本注释
+            fig.add_annotation(
+                xref='paper', yref='paper',
+                x=x, y=y_cursor,
+                text=wrapped,
+                showarrow=False,
+                align='left',
+                font=dict(size=font_size, color='#333'),
+            )
+            # 彩色方块（用文本块模拟 ■）
+            fig.add_annotation(
+                xref='paper', yref='paper',
+                x=symbol_x, y=y_cursor,
+                text='■',
+                showarrow=False,
+                font=dict(size=font_size+4, color=colors[idx % len(colors)])
+            )
+            # 根据行数下移游标
+            lines = wrapped.count('<br>') + 1
+            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.6)

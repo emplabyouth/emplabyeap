@@ -112,7 +112,23 @@ def create_q2_chart(data):
         paper_bgcolor='white',
         plot_bgcolor='white',
         font_family="Noto Sans",
-        margin=dict(t=60, b=20, l=20, r=20),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.02,
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="rgba(0,0,0,0.2)",
+            borderwidth=1,
+            font=dict(size=12),
+            itemwidth=30,
+            tracegroupgap=5,
+            itemsizing="constant",
+            entrywidth=120,
+            entrywidthmode="pixels"
+        ),
+        margin=dict(t=60, b=20, l=20, r=260),
         autosize=True
     )
     
@@ -1171,13 +1187,14 @@ def create_layout():
     # Add Q2 pie chart as the first chart
     st.subheader("📊 General Overview")
     st.markdown("""
+<div class="yeap-body-text">
 This dashboard presents key findings from the **ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey**, based on inputs from ILO staff across the globe.
 
 It is organized in six tabs:
 
-1\\. **General Overview** – background, definitions, and references  
-2\\. **Clusters of the Implementation Framework** – summary of reported outputs by clusters  
-3–6\\. **Dedicated cluster information** – insights on progress across four areas
+1\. **General Overview** – background, definitions, and references  
+2\. **Clusters of the Implementation Framework** – summary of reported outputs by clusters  
+3–6\. **Dedicated cluster information** – insights on progress across four areas
 
 **Filters** (accessible through the navigation panel on the left)
 
@@ -1193,6 +1210,7 @@ It is organized in six tabs:
 
 • [YEAP 2020–2030](https://www.ilo.org/resource/policy/ilos-youth-employment-action-plan-yeap-2020-30)  
 • [Youth Employment Crisis: A Call for Action (ILC, 2012)](https://www.ilo.org/sites/default/files/wcmsp5/groups/public/%40ed_norm/%40relconf/documents/meetingdocument/wcms_185950.pdf)
+</div>
 """, unsafe_allow_html=True)
     st.markdown("---")
     

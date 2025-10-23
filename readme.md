@@ -33,6 +33,15 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 
 ---
 
+## 🔗 项目地址 Links
+
+- GitHub 仓库: https://github.com/emplabyouth/emplabyeap
+- Git 克隆地址: https://github.com/emplabyouth/emplabyeap.git
+- Streamlit Cloud 控制台: https://streamlit.io/cloud （使用 GitHub 账号登录）
+- Streamlit 应用地址:  https://emplabyeap.streamlit.app
+
+---
+
 ## 📊 General Survey Analysis 页面 (通用调查分析)
 
 ### 页面功能 Page Functions
@@ -64,57 +73,6 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 - **显示内容**: 选项名称、数量、百分比
 - **排序方式**: 按数量从高到低排序
 - **百分比计算**: 自动计算各选项占比
-
----
-
-## 🔍 Specialized Analysis (Q3-Q5) 页面 (专项分析)
-
-### 页面功能 Page Functions
-- **实施框架分析**: Q3 - 分析实施框架各集群的产出分布
-- **政策领域分析**: Q4 - 分析青年就业政策各支柱的产出分布
-- **目标群体分析**: Q5 - 分析目标青年群体的产出分布
-- **地区筛选**: 支持按组织单位/地区筛选数据
-
-### 数据文件位置 Data File Locations
-- **Q3 文件**: `orignaldata/PART2_base_dataQ3.csv`
-- **Q4 文件**: `orignaldata/PART2_base_dataQ4.csv`
-- **Q5 文件**: `orignaldata/PART2_base_dataQ5.csv`
-
-### 筛选功能 Filtering Features
-- **筛选字段**: `Department/Region` (部门/地区)
-- **筛选方式**: 下拉菜单选择特定组织单位
-- **全局年份筛选**: 支持按年份筛选数据
-
-### 详细分析内容 Detailed Analysis Content
-
-#### Q3 - 实施框架分类统计 Implementation Framework Distribution
-- **图表标题**: "Distribution Of Outputs Across The Clusters Of The Implementation Framework"
-- **统计类别**:
-  - Knowledge development and dissemination (知识开发和传播)
-  - Technical assistance and capacity-building of constituents (技术援助和成员能力建设)
-  - Advocacy and partnerships (倡导和合作伙伴关系)
-- **统计方法**: 统计每个分类中标记为'YES'的项目数量
-
-#### Q4 - 青年就业政策分类统计 Youth Employment Policy Distribution
-- **图表标题**: "Distribution Of Outputs Across The Pillars Of The Call For Action On Youth Employment"
-- **统计类别**:
-  - Employment and economic policies for youth employment (青年就业的就业和经济政策)
-  - Employability – Education, training and skills, and the school-to-work transition (就业能力 – 教育、培训和技能，以及从学校到工作的过渡)
-  - Labour market policies (劳动力市场政策)
-  - Youth entrepreneurship and self-employment (青年创业和自主就业)
-  - Rights for young people (青年人权利)
-
-#### Q5 - 目标青年群体统计 Target Youth Groups Distribution
-- **图表标题**: "Distribution Of Outputs Across Target Youth Groups, When Applicable"
-- **统计类别**:
-  - Young women (年轻女性)
-  - Young people not in employment, education or training (NEET) (不在就业、教育或培训中的年轻人)
-  - Young migrant workers (年轻移民工人)
-  - Young refugees (年轻难民)
-  - Young people - sexual orientation and gender identity (年轻人 - 性取向和性别认同)
-  - Young people with disabilities (残疾年轻人)
-  - Young rural workers (年轻农村工人)
-  - Young indigenous people (年轻原住民)
 
 ---
 
@@ -151,10 +109,10 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 - **副标题**: "Analysis of advocacy initiatives and partnership activities"
 
 ### 数据文件位置 Data File Locations
-- **Q6 文件**: `orignaldata/PART3_base_dataQ6.csv` (知识发展与传播)
-- **Q7 文件**: `orignaldata/PART3_base_dataQ7.csv` (技术援助)
-- **Q10 文件**: `orignaldata/PART3_base_dataQ10.csv` (能力发展)
-- **Q11 文件**: `orignaldata/PART3_base_dataQ11.csv` (倡导与合作伙伴关系)
+- **Q6_knowledge development&dissemination**: `orignaldata/PART3_base_dataQ6.csv`(知识发展与传播)
+- **Q7_technical assistance**: `orignaldata/PART3_base_dataQ7.csv`(技术援助)
+- **Q10_capacity development**: `orignaldata/PART3_base_dataQ10.csv`(能力发展)
+- **Q11_advocacy&partnerships**: `orignaldata/PART3_base_dataQ11.csv`(倡导与合作伙伴关系)
 
 ### 筛选功能 Filtering Features
 - **地区筛选**: `Department/Region` 字段筛选
@@ -297,76 +255,36 @@ streamlit run streamlit_app.py
 ## 📁 项目文件结构 Project File Structure
 
 ```
-yeap-10-10/
+emplabyeap-main/
 ├── orignaldata/                    # 原始数据文件夹
-│   ├── PART1_base_dataQ2-5.csv   # Q1-Q5 通用调查数据
-│   ├── PART2_base_dataQ3.csv     # Q3 实施框架数据
-│   ├── PART2_base_dataQ4.csv     # Q4 政策领域数据
-│   ├── PART2_base_dataQ5.csv     # Q5 目标群体数据
-│   ├── PART3_base_dataQ6.csv     # Q6 知识发展数据
-│   ├── PART3_base_dataQ7.csv     # Q7 技术援助数据
-│   ├── PART3_base_dataQ10.csv    # Q10 能力发展数据
-│   ├── PART3_base_dataQ11.csv    # Q11 倡导合作数据
+│   ├── PART1_base_dataQ2-5.csv   # Q2 饼图与通用分析数据
+│   ├── PART2_base_dataQ3.csv     # Q3 概览汇总（实施框架）
+│   ├── PART2_base_dataQ4.csv     # Q4 概览汇总（政策支柱）
+│   ├── PART2_base_dataQ5.csv     # Q5 概览汇总（目标群体）
+│   ├── PART3_base_dataQ6.csv     # Q6_knowledge development & dissemination
+│   ├── PART3_base_dataQ7.csv     # Q7_technical assistance
+│   ├── PART3_base_dataQ10.csv    # Q10_capacity development
+│   ├── PART3_base_dataQ11.csv    # Q11_advocacy & partnerships
 │   ├── logo.png                   # ILO 标志文件
 │   └── question_list.csv          # 问题列表文件
 ├── streamlit/                      # Streamlit 应用文件夹
-│   ├── streamlit_app.py           # 主应用入口，负责页面配置、导航路由和全局筛选器（年份、组织单位）管理
-│   ├── st_landing_dashboard.py    # Overview 页面实现，包含 Q2 饼图、Q3-Q5 汇总表，支持部门和地区维度分析
-│   ├── st_q6q7q10q11_dashboard.py # 专项分析页面，使用 Q6Q7Q10Q11DataProcessor 处理多数据源合并和统计分析
-│   ├── st_styles.py               # 全局样式管理器，提供统一的 CSS 样式、图表标准化和主题配置
-│   ├── color_config.py            # 集中管理应用配色方案，包含主色调、图表颜色和渐变色配置
-│   ├── visualizer.py              # 可视化工具文件
-│   └── requirements.txt           # Python 依赖文件
-├── Data_Sources_Documentation.md   # 本说明文档
-├── TUTORIAL.md                    # 项目教程文档
-├── 独立页面标题修改说明.md         # 标题修改指南
+│   ├── streamlit_app.py           # 主应用入口，页面配置与导航（年份/组织单位筛选）
+│   ├── st_landing_dashboard.py    # Overview：Q2 饼图、Q3–Q5 概览汇总表
+│   ├── st_q6q7q10q11_dashboard.py # 专项分析：Q6/Q7/Q10/Q11
+│   ├── st_styles.py               # 全局样式与主题配置
+│   ├── color_config.py            # 统一配色方案
+│   ├── visualizer.py              # 可视化辅助
+│   ├── assets/fonts/              # 字体资源
+│   ├── pages/                     # 多页面支持（如启用）
+│   └── requirements.txt           # Python 依赖文件（Streamlit 子项目）
 ├── start_dashboard.py             # 启动脚本
-├── upload_to_github_example.ps1   # GitHub 上传脚本示例
-└── README.md                      # 项目说明文件
+├── upload_to_github_example.ps1   # Git 上传脚本示例
+├── requirements.txt               # 项目依赖
+└── readme.md                      # 项目说明文件
 ```
 
 ---
 
-## 🔍 故障排除 Troubleshooting
-
-### 常见问题 Common Issues
-
-#### 1. 数据文件未找到
-**问题**: 显示"No data available"或文件路径错误
-**解决方案**: 
-- 检查 `orignaldata` 文件夹是否存在
-- 确认 CSV 文件名称正确
-- 验证文件路径和编码格式
-
-#### 2. 图表显示异常
-**问题**: 图表无法显示或显示错误
-**解决方案**:
-- 检查数据格式是否正确
-- 确认数值字段不包含非数字字符
-- 验证数据是否为空
-
-#### 3. 筛选功能无效
-**问题**: 地区或年份筛选不起作用
-**解决方案**:
-- 检查数据文件中是否包含相应的筛选字段
-- 确认字段名称拼写正确
-- 验证数据格式一致性
-
-### 性能优化建议 Performance Optimization Tips
-1. **数据预处理**: 定期清理和优化数据文件
-2. **缓存使用**: 利用 Streamlit 的缓存功能
-3. **分页显示**: 对大量数据使用分页显示
-4. **图表优化**: 合理选择图表类型和数据点数量
-
----
-
-## 📞 技术支持 Technical Support
-
-如需技术支持或有任何问题，请参考：
-1. **文档指南**: 查看本说明文档和标题修改指南
-2. **代码注释**: 查看源代码中的详细注释
-3. **日志信息**: 检查控制台输出的错误信息
-4. **数据验证**: 使用数据质量检查工具验证数据完整性
 
 # YEAP Dashboard - 新手指南
 
@@ -507,17 +425,7 @@ Streamlit Cloud 可以轻松地直接从 GitHub 部署您的 Streamlit 应用程
     -   Streamlit Cloud 将开始构建和部署您的应用程序。此过程可能需要几分钟。
     -   部署完成后，您将获得一个可共享的仪表板公共 URL。
 
-## 5. 在 Trae AI 中运行仪表板 (面向开发者)
 
-如果您在 Trae AI 环境中工作，您可以直接在 IDE 中使用 `start_dashboard.py` 脚本进行快速本地测试。
-
-1.  **打开 `start_dashboard.py`**: 在 Trae AI 文件浏览器中，导航并打开 `start_dashboard.py`。
-
-2.  **运行脚本**: 当 `start_dashboard.py` 打开时，点击编辑器右上角的“运行”按钮（通常是一个播放图标）。
-
-3.  **预览**: Trae AI 将执行脚本，激活虚拟环境，如果需要则安装依赖，并启动 Streamlit 应用程序。然后它将提供一个预览 URL（例如，`http://localhost:8501`），您可以在浏览器中打开该 URL 以查看仪表板。
-
-此脚本处理环境检查、依赖安装，并自动打开浏览器，方便开发。
 
 ## 6. 故障排除
 
@@ -691,10 +599,3 @@ A: 使用全局搜索找到所有位置，逐一修改
 ### Q: 如何批量修改相似标题？
 A: 使用IDE的查找替换功能，但要谨慎操作
 
-## 技术支持
-
-如遇到问题，可以：
-1. 检查控制台错误信息
-2. 使用版本控制回退更改
-3. 参考原始代码结构
-4. 联系技术支持团队

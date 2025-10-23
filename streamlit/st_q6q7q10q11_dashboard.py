@@ -840,6 +840,30 @@ def create_theme_detail_list(data_processor, question):
             plot_bgcolor='white',
             font_family="'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         )
+        
+        # 为饼图添加居中配置
+        if chart_type == 'pie':
+            fig.update_layout(
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.02,
+                    bgcolor="rgba(255,255,255,0.9)",
+                    bordercolor="rgba(0,0,0,0.2)",
+                    borderwidth=1,
+                    font=dict(size=12),
+                    itemwidth=30,
+                    tracegroupgap=5,
+                    itemsizing="constant",
+                    entrywidth=120,
+                    entrywidthmode="pixels"
+                ),
+                margin=dict(l=20, r=260, t=60, b=20),
+                autosize=True
+            )
+        
         # Keep chart title in Overpass
         fig.update_layout(title={'text': title, 'font': {'family': "'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"}})
         
