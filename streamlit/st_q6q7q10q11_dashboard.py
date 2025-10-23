@@ -85,7 +85,7 @@ def create_unified_header():
         ">
             <div style="
                 font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                font-size: clamp(1.2rem, 4vw, 2.8rem); 
+                font-size: clamp(0.96rem, 3.2vw, 2.24rem); 
                 font-weight: 700; 
                 margin-bottom: 5px;
                 word-wrap: break-word;
@@ -97,7 +97,7 @@ def create_unified_header():
             </div>
             <div style="
                 font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                font-size: clamp(0.9rem, 2.5vw, 1.8rem); 
+                font-size: clamp(0.81rem, 2.25vw, 1.62rem); 
                 font-weight: 300;
                 word-wrap: break-word;
                 text-align: center;
