@@ -27,10 +27,10 @@ def check_environment():
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Check if streamlit_app.py exists in root directory
-    streamlit_app = Path("streamlit_app.py")
+    # Check if streamlit_app.py exists in streamlit directory
+    streamlit_app = Path("streamlit/streamlit_app.py")
     if not streamlit_app.exists():
-        print("❌ Error: streamlit_app.py not found in root directory")
+        print("❌ Error: streamlit/streamlit_app.py not found")
         input("Press Enter to exit...")
         sys.exit(1)
     
@@ -48,39 +48,35 @@ def check_dependencies():
         return False
 
 def start_streamlit():
-    """Start Streamlit application"""
-    print()
-    print("🚀 Starting YEAP Dashboard...")
-    print()
-    print("📱 The dashboard will open in your default browser automatically.")
-    print("🌐 If it doesn't open, please visit: http://localhost:8501")
-    print()
-    print("⏹️  To stop the server, press Ctrl+C in this window.")
-    print("=" * 50)
-    print()
-    
+    """Start the Streamlit application"""
     try:
-        # Start Streamlit application from root directory
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit_app.py"], check=True)
+        print("🚀 Starting Streamlit application...")
+        print("📊 YEAP Dashboard will open in your browser shortly...")
+        print("🔗 Local URL: http://localhost:8501")
+        print("🌐 Network URL will be shown after startup")
+        print("⏹️  Press Ctrl+C to stop the server")
+        print("-" * 50)
+        
+        # Change to streamlit directory and run the app
+        os.chdir("streamlit")
+        result = subprocess.run([
+            sys.executable, "-m", "streamlit", "run", "streamlit_app.py",
+            "--server.headless", "true",
+            "--server.enableCORS", "false",
+            "--server.enableXsrfProtection", "false"
+        ], check=True)
+        
     except subprocess.CalledProcessError as e:
-        print()
-        print("=" * 50)
-        print("❌ Error: Failed to start Streamlit")
-        print()
-        print(f"Error details: {e}")
-        print()
-        print("Possible solutions:")
-        print("1. Make sure Python is installed and in PATH")
-        print("2. Install Streamlit: pip install streamlit")
-        print("3. Install project dependencies: pip install -r requirements.txt")
-        print("4. Check if port 8501 is already in use")
-        print("=" * 50)
+        print(f"❌ Error starting Streamlit: {e}")
         input("Press Enter to exit...")
         sys.exit(1)
     except KeyboardInterrupt:
-        print()
-        print("🛑 Dashboard stopped by user")
-        print("👋 Goodbye!")
+        print("\n👋 Streamlit server stopped by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        input("Press Enter to exit...")
+        sys.exit(1)
 
 def main():
     """Main function"""
