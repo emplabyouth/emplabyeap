@@ -89,6 +89,10 @@ class StreamlitStyleManager:
             color: #333333;
         }}
 
+        /* 取消正文加粗样式 */
+        .yeap-body-text b, .yeap-body-text strong {{ font-weight: 400 !important; }}
+        .stMarkdown b, .stMarkdown strong, .markdown-text-container b, .markdown-text-container strong {{ font-weight: 400 !important; }}
+
         /* 根变量 */
         :root {{
             --primary-color: {self.theme_colors['primary']};
@@ -102,7 +106,7 @@ class StreamlitStyleManager:
         
         /* 主容器样式 */
         .main .block-container {{
-            padding-top: 2rem;
+            padding-top: 0rem; /* 去掉顶部内边距，确保切页后完全贴顶 */
             padding-bottom: 2rem;
             max-width: 1200px;
         }}
@@ -224,6 +228,19 @@ class StreamlitStyleManager:
             parts.append(line)
         return '<br>'.join(parts)
 
+    def _to_title_case(self, s: str) -> str:
+        """将标签文本首字母大写（保留短大写缩写，如 ILO、UN）。"""
+        if s is None:
+            return ''
+        s = str(s)
+        def _cap_word(w: str) -> str:
+            # 保留全大写且较短的缩写
+            if w.isupper() and len(w) <= 5:
+                return w
+            # 处理连字符词
+            return '-'.join(sub.capitalize() if sub else '' for sub in w.split('-'))
+        return ' '.join(_cap_word(part) for part in s.split())
+
     # 自定义：固定宽度纵向图例（使用注释模拟）
     def _wrap_legend_text(self, text: str, max_chars: int = 18) -> str:
         """按字符数进行简单换行，返回带<br>的文本"""
@@ -314,7 +331,7 @@ class StreamlitStyleManager:
         if not preserve_order and chart_type in ['bar', 'horizontal_bar']:
             data_dict = dict(sorted(data_dict.items(), key=lambda x: x[1], reverse=True))
         
-        labels = list(data_dict.keys())
+        labels = [self._to_title_case(lbl) for lbl in list(data_dict.keys())]
         values = list(data_dict.values())
         
         # 检查是否为区域相关图表、Partnership类型图表或频次分析图表，使用渐变色
@@ -355,6 +372,7 @@ class StreamlitStyleManager:
                 marker_color=colors,
                 text=values,
                 textposition='auto',
+                hovertemplate='%{x}<br>%{y}<extra></extra>',
                 width=0.6,  # 调整柱子宽度，使其更细
                 showlegend=False  # 确保柱状图不显示图例
             )])
@@ -369,20 +387,20 @@ class StreamlitStyleManager:
                     cmin=min_val if values else 0,
                     cmax=max_val if values else 1,
                     colorbar=dict(
-                        title="",  # 移除"数值大小"文字
+                        title={'text': ''},  # 彻底移除标题，避免 trace 0
                         x=1.02,
                         len=0.8,
-                        thickness=15,  # 调整图例条厚度
-                        outlinewidth=0,  # 去掉黑色边框
+                        thickness=15,
+                        outlinewidth=0,
                         tickmode='linear',
                         tick0=min_val if values else 0,
                         dtick=(max_val - min_val) / 4 if values and max_val != min_val else 1,
-                        showticklabels=False  # 隐藏数值标签
+                        showticklabels=False
                     )
                 ),
                 showlegend=False,
-                name="",  # 移除trace 0标签
-                hoverinfo='skip'  # 跳过悬停信息
+                name=' ',  # 防止 Plotly 回退到 trace 0
+                hoverinfo='skip'
             ))
         else:
             # 使用标准颜色
@@ -419,7 +437,8 @@ class StreamlitStyleManager:
                     orientation='h',
                     marker_color=colors[0],
                     text=values,
-                    textposition='auto'
+                    textposition='auto',
+                    hovertemplate='%{y}<br>%{x}<extra></extra>'
                 )])
                 fig.update_layout(height=max(400, len(labels) * 30))
             else:  # bar
@@ -428,7 +447,8 @@ class StreamlitStyleManager:
                     y=values,
                     marker_color=colors[0],
                     text=values,
-                    textposition='auto'
+                    textposition='auto',
+                    hovertemplate='%{x}<br>%{y}<extra></extra>'
                 )])
         
         # 应用统一布局和标题换行
@@ -437,6 +457,16 @@ class StreamlitStyleManager:
         title_config['text'] = self._wrap_title(title)
         layout_config['title'] = title_config
         fig.update_layout(**layout_config)
+        # 统一悬停标签样式，确保与全局字体保持一致
+        fig.update_layout(hoverlabel=dict(
+            bgcolor='white',
+            bordercolor='#dee2e6',
+            font=dict(
+                family=layout_config.get('font', {}).get('family', "'Noto Sans', 'Noto Sans SC', sans-serif"),
+                size=12,
+                color='#333333'
+            )
+        ))
         
         return fig
 

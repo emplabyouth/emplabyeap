@@ -1188,25 +1188,27 @@ def create_layout():
     st.subheader("📊 General Overview")
     st.markdown("""
 <div class="yeap-body-text">
-This dashboard presents key findings from the **ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey**, based on inputs from ILO staff across the globe.
+This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe.
 
-It is organized in six tabs:
+It is organized in five tabs:
 
-1\. **General Overview** – background, definitions, and references  
-2\. **Clusters of the Implementation Framework** – summary of reported outputs by clusters  
-3–6\. **Dedicated cluster information** – insights on progress across four areas
+1. Overview - background, definitions, and references, as well as summary of reported outputs by cluster of implementation
+2. Knowledge development and dissemination outputs
+3. Technical assistance outputs
+4. Capacity development outputs
+5. Advocacy and partnerships outputs
 
-**Filters** (accessible through the navigation panel on the left)
+Filters (accessible through the navigation panel on the left)
 
-• The **Period Filter** allows users to filter results by year of reporting.  
-• The **Organizational Unit Filter** displays results by specific department or region.
+• The Period Filter allows users to filter results by year of reporting.  
+• The Organizational Unit Filter displays results by specific department or region.
 
-**Definitions**
+Definitions
 
-• **Outputs**: tangible deliverables or results contributing to YEAP implementation.  
-• **Respondents**: ILO staff from HQ and field offices.
+• Outputs: tangible deliverables or results contributing to YEAP implementation.  
+• Respondents: ILO staff from HQ and field offices.
 
-**References**
+References
 
 • [YEAP 2020–2030](https://www.ilo.org/resource/policy/ilos-youth-employment-action-plan-yeap-2020-30)  
 • [Youth Employment Crisis: A Call for Action (ILC, 2012)](https://www.ilo.org/sites/default/files/wcmsp5/groups/public/%40ed_norm/%40relconf/documents/meetingdocument/wcms_185950.pdf)

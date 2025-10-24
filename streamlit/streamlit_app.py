@@ -58,8 +58,16 @@ PAGES = {
 }
 
 st.sidebar.title("Navigation")
-selection = st.sidebar.radio("Go to", list(PAGES.keys()))
+
+def _on_page_change():
+    st.session_state['_scroll_to_top'] = True
+
+selection = st.sidebar.radio("Go to", list(PAGES.keys()), key="page_selection", on_change=_on_page_change)
 page = PAGES[selection]
+
+# In-page top anchor for robust scrollIntoView behavior
+TOP_ANCHOR_ID = 'yeap-top-anchor'
+st.markdown(f'<div id="{TOP_ANCHOR_ID}" style="position:relative;height:0;"></div>', unsafe_allow_html=True)
 
 # ---------------- Global Year Filter ----------------
 # Always provide a global year filter
@@ -99,7 +107,7 @@ try:
     if len(year_options) == 1:  # Only 'All'
         year_options = ['All', '2025']  # Fallback default to 2025
 
-    st.sidebar.header("Global Filters")
+    st.sidebar.header("Filters")
     
     # Set default to 2025 if available, otherwise most recent year, otherwise 'All'
     default_index = 0  # Default to 'All'
@@ -204,3 +212,35 @@ try:
     _apply_global_style()
 except Exception:
     pass
+
+# Ensure scrolling to top once the page finishes rendering
+if st.session_state.get('_scroll_to_top', False):
+    import streamlit.components.v1 as components
+    components.html(
+        """
+        <script>
+        (function(){
+          var attempts = 0;
+          function scrollTop(){
+            attempts++;
+            try {
+              var parentDoc = window.parent && window.parent.document ? window.parent.document : document;
+              var anchor = parentDoc.getElementById('yeap-top-anchor');
+              if (anchor && anchor.scrollIntoView) {
+                anchor.scrollIntoView({behavior:'auto', block:'start'});
+              } else {
+                var main = parentDoc.querySelector('section.main') || parentDoc.querySelector('.main') || parentDoc.querySelector('[data-testid="stAppViewContainer"]') || parentDoc.querySelector('[data-testid="stAppViewBlockContainer"]') || parentDoc.querySelector('.block-container');
+                if (main && main.scrollTop !== undefined) { main.scrollTop = 0; }
+                if (main && main.scrollTo) { main.scrollTo({top:0, behavior:'auto'}); }
+                window.scrollTo(0,0);
+              }
+            } catch(e) { window.scrollTo(0,0); }
+            if (attempts < 5) setTimeout(scrollTop, 100);
+          }
+          setTimeout(scrollTop, 0);
+        })();
+        </script>
+        """,
+        height=0,
+    )
+    st.session_state['_scroll_to_top'] = False

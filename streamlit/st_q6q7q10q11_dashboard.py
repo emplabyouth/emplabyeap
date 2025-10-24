@@ -932,8 +932,7 @@ Outputs also cover the production and dissemination of **publications, tools and
 **Additional resources:**
 - [Youth employment | International Labour Organization](https://www.ilo.org/topics-and-sectors/youth-employment)
 - [Global Employment Trends for Youth 2024 | International Labour Organization](https://www.ilo.org/publications/major-publications/global-employment-trends-youth-2024)
-- [Statistics on youth - ILOSTAT](https://ilostat.ilo.org/topics/youth/)
-- [Active Labour Market Programs Improve Employment and Earnings of Young People | International Labour Organization](https://www.ilo.org/publications/active-labour-market-programs-improve-employment-and-earnings-young-people)"""
+- [Statistics on youth - ILOSTAT](https://ilostat.ilo.org/topics/youth/)"""
         },
         "Technical Assistance": {
             "title": "🔧 Technical Assistance", 
@@ -942,15 +941,11 @@ Outputs also cover the production and dissemination of **publications, tools and
 Activities include support for **national employment policies**, **entrepreneurship programmes**, **job creation measures**, and **social protection for youth**. It also covers policy responses to **future-of-work trends**, such as **technology, climate change**, and the **care economy**, as well as efforts to promote **equal opportunities**, **rights at work**, and a **just transition**.
 
 **Additional resources:**
-- [Youth at the centre of employment policies | International Labour Organization](https://www.ilo.org/resource/article/youth-centre-employment-policies)
-- [ILO Employment Policy Gateway](https://webapps.ilo.org/empolgateway/)
-- [Employment promotion | International Labour Organization](https://www.ilo.org/topics-and-sectors/employment-promotion)"""
+- [ILO Employment Policy Gateway](https://webapps.ilo.org/empolgateway/)"""
         },
         "Capacity Development": {
             "title": "🎓 Capacity Development",
             "subtitle": """This tab highlights ILO's support to **strengthen the capacities** of governments, employers, workers' organizations, and partners to design and implement effective youth employment interventions.
-
-Activities include **training initiatives** on youth employment, **digital and soft skills development**, and **apprenticeships**. It also covers **social dialogue**, **youth participation in policy-making**, and **youth employment programme assessments** to improve policy effectiveness.
 
 The ILO promotes **knowledge exchange**, **institutional strengthening**, and **tripartite collaboration** to advance inclusive and sustainable employment for youth.
 
@@ -959,11 +954,7 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
         },
         "Advocacy & Partnerships": {
             "title": "🤝 Advocacy & Partnerships",
-            "subtitle": """This tab highlights the ILO's efforts to advance **global leadership on youth employment** through **strategic partnerships and advocacy** at global, regional, and national levels.
-
-Activities include collaboration through the [Global Initiative on Decent Jobs for Youth](https://www.decentjobsforyouth.org/), partnerships with UN agencies, donors, and youth organizations, and engagement in G7, G20, and UN forums.
-
-At country level, work focuses on **joint programmes**, **communication**, and **resource mobilization** to scale up action for **decent work for youth**."""
+            "subtitle": """This tab highlights the ILO's efforts to develop and nurture strategic partnerships and advocacy at global, regional, and national levels. Outputs include multi-stakeholder alliances (including through the Global Initiative on Decent Jobs for Youth), as well as partnerships with UN agencies, donors, and youth organizations, among other."""
         }
     }
     
