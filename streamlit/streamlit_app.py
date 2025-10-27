@@ -60,14 +60,65 @@ PAGES = {
 st.sidebar.title("Navigation")
 
 def _on_page_change():
-    st.session_state['_scroll_to_top'] = True
+    # 设置页面重置标记
+    st.session_state['_page_reset_requested'] = True
+    
+    # 对于使用相同模块的页面间切换，强制清除更多状态
+    current_selection = st.session_state.get('page_selection', '')
+    previous_selection = st.session_state.get('_previous_page_selection', '')
+    
+    # 检查是否是在使用相同模块的页面间切换
+    same_module_pages = [
+        "📚 Knowledge Development & Dissemination",
+        "🔧 Technical Assistance", 
+        "🎓 Capacity Development",
+        "🤝 Advocacy & Partnerships"
+    ]
+    
+    if current_selection in same_module_pages and previous_selection in same_module_pages:
+        # 强制清除所有相关状态，确保完全重新初始化
+        st.session_state['_force_full_reset'] = True
+    
+    # 记录当前页面选择
+    st.session_state['_previous_page_selection'] = current_selection
 
 selection = st.sidebar.radio("Go to", list(PAGES.keys()), key="page_selection", on_change=_on_page_change)
+
+# 处理页面重置请求
+if st.session_state.get('_page_reset_requested', False):
+    # 清除所有页面相关的session state，强制重新初始化
+    keys_to_clear = []
+    for key in st.session_state.keys():
+        # 保留全局设置，清除页面特定的状态
+        if not key.startswith('selected_year') and not key.startswith('selected_region') and not key.startswith('year_options') and not key.startswith('regions_options'):
+            # 对于强制完全重置的情况，清除更多状态
+            if st.session_state.get('_force_full_reset', False):
+                if key not in ['page_selection', '_page_reset_requested', '_force_full_reset', '_previous_page_selection']:
+                    keys_to_clear.append(key)
+            else:
+                # 始终清除分页相关的状态，确保滚动重置正常工作
+                if key not in ['page_selection', '_page_reset_requested', '_previous_page_selection'] or key.startswith('outputs_current_page_'):
+                    keys_to_clear.append(key)
+    
+    for key in keys_to_clear:
+        del st.session_state[key]
+    
+    # 设置滚动到顶部标记
+    st.session_state['_scroll_to_top'] = True
+    
+    # 清除重置标记
+    st.session_state['_page_reset_requested'] = False
+    if '_force_full_reset' in st.session_state:
+        del st.session_state['_force_full_reset']
+    
+    # 强制重新运行
+    st.rerun()
+
 page = PAGES[selection]
 
 # In-page top anchor for robust scrollIntoView behavior
 TOP_ANCHOR_ID = 'yeap-top-anchor'
-st.markdown(f'<div id="{TOP_ANCHOR_ID}" style="position:relative;height:0;"></div>', unsafe_allow_html=True)
+st.markdown(f'<div id="{TOP_ANCHOR_ID}" style="position:relative;top:-50px;height:0;"></div>', unsafe_allow_html=True)
 
 # ---------------- Global Year Filter ----------------
 # Always provide a global year filter
@@ -213,32 +264,56 @@ try:
 except Exception:
     pass
 
-# Ensure scrolling to top once the page finishes rendering
+# 确保在页面渲染完成后滚动到顶部
 if st.session_state.get('_scroll_to_top', False):
     import streamlit.components.v1 as components
     components.html(
-        """
+        f"""
         <script>
-        (function(){
-          var attempts = 0;
-          function scrollTop(){
-            attempts++;
-            try {
-              var parentDoc = window.parent && window.parent.document ? window.parent.document : document;
-              var anchor = parentDoc.getElementById('yeap-top-anchor');
-              if (anchor && anchor.scrollIntoView) {
-                anchor.scrollIntoView({behavior:'auto', block:'start'});
-              } else {
-                var main = parentDoc.querySelector('section.main') || parentDoc.querySelector('.main') || parentDoc.querySelector('[data-testid="stAppViewContainer"]') || parentDoc.querySelector('[data-testid="stAppViewBlockContainer"]') || parentDoc.querySelector('.block-container');
-                if (main && main.scrollTop !== undefined) { main.scrollTop = 0; }
-                if (main && main.scrollTo) { main.scrollTo({top:0, behavior:'auto'}); }
-                window.scrollTo(0,0);
-              }
-            } catch(e) { window.scrollTo(0,0); }
-            if (attempts < 5) setTimeout(scrollTop, 100);
-          }
-          setTimeout(scrollTop, 0);
-        })();
+        (function() {{
+            function scrollToTop() {{
+                try {{
+                    // 尝试滚动到锚点
+                    const anchor = window.parent.document.getElementById('{TOP_ANCHOR_ID}');
+                    if (anchor) {{
+                        anchor.scrollIntoView({{behavior: 'auto', block: 'start'}});
+                        return;
+                    }}
+                    
+                    // 如果没有锚点，尝试滚动主容器
+                    const containers = [
+                        window.parent.document.documentElement,
+                        window.parent.document.body,
+                        window.parent.document.querySelector('section.main'),
+                        window.parent.document.querySelector('.main'),
+                        window.parent.document.querySelector('[data-testid="stAppViewContainer"]'),
+                        window.parent.document.querySelector('[data-testid="stAppViewBlockContainer"]'),
+                        window.parent.document.querySelector('.block-container')
+                    ];
+                    
+                    containers.forEach(container => {{
+                        if (container) {{
+                            try {{
+                                container.scrollTop = 0;
+                            }} catch(e) {{}}
+                        }}
+                    }});
+                    
+                    // 最后尝试窗口滚动
+                    window.parent.scrollTo(0, 0);
+                }} catch(e) {{
+                    console.log('Scroll error:', e);
+                }}
+            }}
+            
+            // 立即执行一次
+            scrollToTop();
+            
+            // 延迟执行几次确保生效
+            setTimeout(scrollToTop, 100);
+            setTimeout(scrollToTop, 300);
+            setTimeout(scrollToTop, 500);
+        }})();
         </script>
         """,
         height=0,

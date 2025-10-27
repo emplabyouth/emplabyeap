@@ -936,16 +936,14 @@ Outputs also cover the production and dissemination of **publications, tools and
         },
         "Technical Assistance": {
             "title": "🔧 Technical Assistance", 
-            "subtitle": """This tab highlights the ILO's technical support to countries in developing and implementing **gender-responsive youth employment policies and strategies**.
-
-Activities include support for **national employment policies**, **entrepreneurship programmes**, **job creation measures**, and **social protection for youth**. It also covers policy responses to **future-of-work trends**, such as **technology, climate change**, and the **care economy**, as well as efforts to promote **equal opportunities**, **rights at work**, and a **just transition**.
+            "subtitle": """This tab highlights the ILO's technical support to countries in developing and implementing **gender-responsive youth employment policies and strategies**. Activities include support for **national employment policies**, **entrepreneurship programmes**, **job creation measures**, and **social protection for youth**. It also covers policy responses to **future-of-work trends**, such as **technology, climate change**, and the **care economy**, as well as efforts to promote **equal opportunities**, **rights at work**, and a **just transition**.
 
 **Additional resources:**
 - [ILO Employment Policy Gateway](https://webapps.ilo.org/empolgateway/)"""
         },
         "Capacity Development": {
             "title": "🎓 Capacity Development",
-            "subtitle": """This tab highlights ILO's support to **strengthen the capacities** of governments, employers and workers' organizations, and partners to design and implement effective youth employment strategies.
+            "subtitle": """This tab highlights ILO's support to **strengthen the capacities** of governments, employers' and workers' organizations, and partners to design and implement effective youth employment strategies.
 
 The ILO promotes **knowledge exchange**, **institutional strengthening**, and **tripartite collaboration** to advance inclusive and sustainable employment for youth.
 
@@ -954,7 +952,7 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
         },
         "Advocacy & Partnerships": {
             "title": "🤝 Advocacy & Partnerships",
-            "subtitle": """This tab highlights the ILO's efforts to develop and nurture strategic partnerships and advocacy at global, regional, and national levels. Outputs include multi-stakeholder alliances (including through the Global Initiative on Decent Jobs for Youth), as well as partnerships with UN agencies, donors, and youth organizations, among others."""
+            "subtitle": """This tab highlights the ILO's efforts to develop and nurture strategic partnerships and advocacy at global, regional, and national levels. Outputs include multi-stakeholder alliances (including through the [Global Initiative on Decent Jobs for Youth](https://www.decentjobsforyouth.org/)), as well as partnerships with UN agencies, donors, and youth organizations, among others."""
         }
     }
     
@@ -1283,7 +1281,7 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
             # Get current page data
             display_df = detail_df.iloc[start_idx:end_idx].copy()
             
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width='stretch')
             
             # Compact pagination controls
             st.markdown("<br>", unsafe_allow_html=True)
