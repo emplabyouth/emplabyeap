@@ -1188,7 +1188,7 @@ def create_layout():
     st.subheader("📊 General Overview")
     st.markdown("""
 <div class="yeap-body-text">
-This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe.It is organized in five tabs:
+This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe. It is organized in five tabs:
 
 1. Overview - background, definitions, and references, as well as summary of reported outputs by cluster of implementation
 2. Knowledge development and dissemination outputs
@@ -1303,4 +1303,5 @@ References
         st.error(f"Error loading Clusters data: {e}")
     
     st.markdown("---")
+
     st.write("Use the sidebar to select period and navigate other dashboards.")
