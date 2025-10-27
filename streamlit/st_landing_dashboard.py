@@ -1188,9 +1188,7 @@ def create_layout():
     st.subheader("📊 General Overview")
     st.markdown("""
 <div class="yeap-body-text">
-This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe.
-
-It is organized in five tabs:
+This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe.It is organized in five tabs:
 
 1. Overview - background, definitions, and references, as well as summary of reported outputs by cluster of implementation
 2. Knowledge development and dissemination outputs
@@ -1221,7 +1219,7 @@ References
     if q2_data:
         q2_chart = create_q2_chart(q2_data)
         if q2_chart:
-            st.plotly_chart(q2_chart, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(q2_chart, width='stretch', config={'displayModeBar': False})
         else:
             st.error("Failed to create Q2 chart")
     else:
