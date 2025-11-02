@@ -81,7 +81,7 @@ def create_unified_header():
             justify-content: center;
             line-height: 1.2;
             padding: 10px;
-            overflow: hidden;
+            overflow: visible;
         ">
             <div style="
                 font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 

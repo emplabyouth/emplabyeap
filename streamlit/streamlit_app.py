@@ -10,6 +10,7 @@ if current_dir not in sys.path:
 
 import st_q6q7q10q11_dashboard
 import st_landing_dashboard
+import st_technical_assistance_new
 
 st.set_page_config(
     page_title="ILO Youth Employment Action Plan (YEAP)",
@@ -52,7 +53,7 @@ except Exception:
 PAGES = {
     "🏠 Overview": st_landing_dashboard,
     "📚 Knowledge Development & Dissemination": st_q6q7q10q11_dashboard,
-    "🔧 Technical Assistance": st_q6q7q10q11_dashboard,
+    "🔧 Technical Assistance": st_technical_assistance_new,
     "🎓 Capacity Development": st_q6q7q10q11_dashboard,
     "🤝 Advocacy & Partnerships": st_q6q7q10q11_dashboard,
 }
@@ -62,6 +63,9 @@ st.sidebar.title("Navigation")
 def _on_page_change():
     # 设置页面重置标记
     st.session_state['_page_reset_requested'] = True
+    
+    # 设置滚动到顶部标记 - 所有页面切换都需要滚动到顶部
+    st.session_state['_scroll_to_top'] = True
     
     # 对于使用相同模块的页面间切换，强制清除更多状态
     current_selection = st.session_state.get('page_selection', '')
@@ -185,11 +189,66 @@ except Exception as e:
 # ---------------- Global shared filters (Organizational Unit) ----------------
 # Check if any of the specialized analysis pages are selected
 specialized_pages = [
-    "📚 Knowledge Development & Dissemination", 
+    "📚 Knowledge Development & Dissemination",
     "🔧 Technical Assistance",
     "🎓 Capacity Development",
     "🤝 Advocacy & Partnerships"
 ]
+
+# Check if page has changed and reset region filter if needed
+if 'previous_page' not in st.session_state:
+    st.session_state['previous_page'] = selection
+    # Force scroll to top on first load
+    st.session_state['_scroll_to_top'] = True
+elif st.session_state['previous_page'] != selection:
+    # Page has changed, reset region filter to "All"
+    if 'selected_region' in st.session_state:
+        st.session_state['selected_region'] = 'All'
+    # Trigger scroll to top when page changes
+    st.session_state['_scroll_to_top'] = True
+    st.session_state['previous_page'] = selection
+    # Force immediate scroll to top with stronger JavaScript
+    st.markdown(
+        """
+        <script>
+        (function() {
+          function forceScrollToTop() {
+            try {
+              const doc = window.parent && window.parent.document ? window.parent.document : document;
+              const html = doc.documentElement;
+              const body = doc.body;
+              const main = doc.querySelector('section.main') || doc.querySelector('.main') || doc.querySelector('.block-container');
+              
+              // Force scroll behavior to auto and scroll to top
+              [html, body, main].forEach(el => {
+                if (el) {
+                  try { 
+                    el.style.scrollBehavior = 'auto'; 
+                    el.scrollTop = 0; 
+                  } catch (e) {}
+                }
+              });
+              
+              // Also try window scroll
+              try { 
+                if (window.parent && window.parent.scrollTo) {
+                  window.parent.scrollTo(0, 0);
+                } else {
+                  window.scrollTo(0, 0);
+                }
+              } catch (e) {}
+            } catch (err) {}
+          }
+          
+          // Execute immediately and also after a short delay
+          forceScrollToTop();
+          setTimeout(forceScrollToTop, 100);
+          setTimeout(forceScrollToTop, 300);
+        })();
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
 if selection in specialized_pages:  # Any specialized analysis page needs region filtering
     st.sidebar.header("Filters")
@@ -225,6 +284,11 @@ if selection in specialized_pages:  # Any specialized analysis page needs region
                 for ch in ['/', '\\', '-', '—', '–', '_', ' ', '（', '）', '(', ')', ':', '：', ',', '·']:
                     s = s.replace(ch, ch + '\u200B')
                 return s
+            
+            # Set default value to "All" if not set or if page changed
+            if 'selected_region' not in st.session_state:
+                st.session_state['selected_region'] = 'All'
+                
             selected_region = st.sidebar.selectbox(
                 "Select Organizational Unit",
                 regions_options,
@@ -242,11 +306,12 @@ if selection in specialized_pages:  # Any specialized analysis page needs region
 if selection in specialized_pages:
     # Map page selection to analysis section
     page_to_section = {
-        "📚 Knowledge Development & Dissemination": "Knowledge Development & Dissemination",
-        "🔧 Technical Assistance": "Technical Assistance", 
-        "🎓 Capacity Development": "Capacity Development",
-        "🤝 Advocacy & Partnerships": "Advocacy & Partnerships"
-    }
+    "🏠 Overview": "Overview",
+    "📚 Knowledge Development & Dissemination": "Knowledge Development & Dissemination",
+    "🔧 Technical Assistance": "Technical Assistance",
+    "🎓 Capacity Development": "Capacity Development",
+    "🤝 Advocacy & Partnerships": "Advocacy & Partnerships"
+}
     
     # Set the selected section in session state
     st.session_state['selected_analysis_section'] = page_to_section[selection]
@@ -254,6 +319,47 @@ if selection in specialized_pages:
 
 # Check if the selected page has a create_layout function
 if hasattr(page, 'create_layout'):
+    # Special handling for Technical Assistance page to ensure scroll to top
+    if selection == "🔧 Technical Assistance":
+        # Force scroll to top before calling the page
+        st.markdown("""
+        <script>
+        (function() {
+            function forceScrollToTop() {
+                try {
+                    // Multiple scroll methods
+                    window.scrollTo({top: 0, behavior: 'instant'});
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                    
+                    // Find and scroll all possible containers
+                    const selectors = [
+                        'main', '.main', '.stApp', 
+                        '[data-testid="stAppViewContainer"]',
+                        '[data-testid="block-container"]',
+                        'section.main', '.css-1d391kg'
+                    ];
+                    
+                    selectors.forEach(selector => {
+                        const elements = document.querySelectorAll(selector);
+                        elements.forEach(element => {
+                            if (element && element.scrollTop !== undefined) {
+                                element.scrollTop = 0;
+                            }
+                        });
+                    });
+                } catch (e) {}
+            }
+            
+            // Execute immediately and with delays
+            forceScrollToTop();
+            setTimeout(forceScrollToTop, 10);
+            setTimeout(forceScrollToTop, 50);
+            setTimeout(forceScrollToTop, 100);
+        })();
+        </script>
+        """, unsafe_allow_html=True)
+    
     page.create_layout()
 else:
     st.error("The selected page does not have a create_layout function.")
@@ -264,58 +370,60 @@ try:
 except Exception:
     pass
 
-# 确保在页面渲染完成后滚动到顶部
+# 页面渲染完成后滚动到顶部（统一处理所有页面）
 if st.session_state.get('_scroll_to_top', False):
     import streamlit.components.v1 as components
     components.html(
-        f"""
+        """
         <script>
-        (function() {{
-            function scrollToTop() {{
-                try {{
-                    // 尝试滚动到锚点
-                    const anchor = window.parent.document.getElementById('{TOP_ANCHOR_ID}');
-                    if (anchor) {{
-                        anchor.scrollIntoView({{behavior: 'auto', block: 'start'}});
-                        return;
-                    }}
-                    
-                    // 如果没有锚点，尝试滚动主容器
-                    const containers = [
-                        window.parent.document.documentElement,
-                        window.parent.document.body,
-                        window.parent.document.querySelector('section.main'),
-                        window.parent.document.querySelector('.main'),
-                        window.parent.document.querySelector('[data-testid="stAppViewContainer"]'),
-                        window.parent.document.querySelector('[data-testid="stAppViewBlockContainer"]'),
-                        window.parent.document.querySelector('.block-container')
-                    ];
-                    
-                    containers.forEach(container => {{
-                        if (container) {{
-                            try {{
-                                container.scrollTop = 0;
-                            }} catch(e) {{}}
-                        }}
-                    }});
-                    
-                    // 最后尝试窗口滚动
-                    window.parent.scrollTo(0, 0);
-                }} catch(e) {{
-                    console.log('Scroll error:', e);
-                }}
-            }}
-            
-            // 立即执行一次
-            scrollToTop();
-            
-            // 延迟执行几次确保生效
-            setTimeout(scrollToTop, 100);
-            setTimeout(scrollToTop, 300);
-            setTimeout(scrollToTop, 500);
-        }})();
+        (function() {
+          const MAX_FRAMES = 80;
+          let frames = 0;
+          try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch (e) {}
+          function doScroll() {
+            try {
+              const doc = window.parent && window.parent.document ? window.parent.document : document;
+              const anchor = doc.getElementById('%s');
+              if (anchor && typeof anchor.scrollIntoView === 'function') {
+                try { anchor.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' }); } catch (e) {}
+              }
+              const html = doc.documentElement;
+              const body = doc.body;
+              const main = doc.querySelector('section.main') || doc.querySelector('.main') || doc.querySelector('.block-container');
+              [html, body, main].forEach(el => {
+                if (el) {
+                  try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {}
+                }
+              });
+              try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0, 0) : window.scrollTo(0, 0)); } catch (e) {}
+            } catch (err) {}
+            if (++frames < MAX_FRAMES) requestAnimationFrame(doScroll);
+          }
+          requestAnimationFrame(doScroll);
+        })();
         </script>
-        """,
-        height=0,
+        """ % TOP_ANCHOR_ID,
+        height=1,
     )
     st.session_state['_scroll_to_top'] = False
+
+
+# 兜底：始终确保页面容器在每次运行后回到顶部（非侵入性）
+st.markdown(
+    """
+    <script>
+      (function(){
+        try {
+          var doc = window.parent && window.parent.document ? window.parent.document : document;
+          try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch (e) {}
+          var main = doc.querySelector('section.main') || doc.querySelector('.main') || doc.querySelector('.block-container');
+          if (main) { try { main.style.scrollBehavior='auto'; main.scrollTop=0; } catch (e) {} }
+          try { doc.documentElement.scrollTop = 0; } catch(e) {}
+          try { doc.body.scrollTop = 0; } catch(e) {}
+          try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0,0) : window.scrollTo(0,0)); } catch(e) {}
+        } catch(e) {}
+      })();
+    </script>
+    """,
+    unsafe_allow_html=True
+)
