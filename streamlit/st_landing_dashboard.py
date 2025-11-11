@@ -1106,6 +1106,46 @@ def get_base64_image(image_path):
 
 def create_layout():
     """Landing page with logo and dynamic year-based title"""
+    # Inject top anchor and robust scroll-to-top to ensure page resets to top on render
+    try:
+        st.markdown('<div id="yeap-top-anchor"></div>', unsafe_allow_html=True)
+        import streamlit.components.v1 as components
+        components.html(
+            """
+            <script>
+            (function() {
+              const MAX_FRAMES = 80;
+              let frames = 0;
+              try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch (e) {}
+              function doScroll() {
+                try {
+                  const doc = window.parent && window.parent.document ? window.parent.document : document;
+                  const anchor = doc.getElementById('yeap-top-anchor');
+                  if (anchor && typeof anchor.scrollIntoView === 'function') {
+                    try { anchor.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' }); } catch (e) {}
+                  }
+                  const containers = [
+                    doc.documentElement,
+                    doc.body,
+                    doc.querySelector('[data-testid]="stAppViewContainer"'),
+                    doc.querySelector('[data-testid]="block-container"'),
+                    doc.querySelector('section.main'),
+                    doc.querySelector('.main'),
+                    doc.querySelector('.block-container')
+                  ].filter(Boolean);
+                  containers.forEach(el => { try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {} });
+                  try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0, 0) : window.scrollTo(0, 0)); } catch (e) {}
+                } catch (err) {}
+                if (++frames < MAX_FRAMES) requestAnimationFrame(doScroll);
+              }
+              requestAnimationFrame(doScroll);
+            })();
+            </script>
+            """,
+            height=1,
+        )
+    except Exception:
+        pass
     if STYLES_AVAILABLE:
         try:
             apply_page_style()
@@ -1188,7 +1228,7 @@ def create_layout():
     st.subheader("📊 General Overview")
     st.markdown("""
 <div class="yeap-body-text">
-This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe.It is organized in five tabs:
+This dashboard presents key findings from the ILO Youth Employment Action Plan (YEAP) 2020–2030 Monitoring Progress Survey, based on inputs from ILO staff across the globe. It is organized in five tabs:
 
 1. Overview - background, definitions, and references, as well as summary of reported outputs by cluster of implementation
 2. Knowledge development and dissemination outputs

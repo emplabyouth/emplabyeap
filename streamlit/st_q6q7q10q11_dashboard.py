@@ -897,6 +897,47 @@ def create_layout():
     """Create the main Streamlit layout with theme-based organization"""
     # Add unified header first
     create_unified_header()
+
+    # Inject top anchor and robust scroll-to-top to ensure page resets to top on render
+    try:
+        st.markdown('<div id="yeap-top-anchor"></div>', unsafe_allow_html=True)
+        import streamlit.components.v1 as components
+        components.html(
+            """
+            <script>
+            (function() {
+              const MAX_FRAMES = 80;
+              let frames = 0;
+              try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch (e) {}
+              function doScroll() {
+                try {
+                  const doc = window.parent && window.parent.document ? window.parent.document : document;
+                  const anchor = doc.getElementById('yeap-top-anchor');
+                  if (anchor && typeof anchor.scrollIntoView === 'function') {
+                    try { anchor.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' }); } catch (e) {}
+                  }
+                  const containers = [
+                    doc.documentElement,
+                    doc.body,
+                    doc.querySelector('[data-testid="stAppViewContainer"]'),
+                    doc.querySelector('[data-testid="block-container"]'),
+                    doc.querySelector('section.main'),
+                    doc.querySelector('.main'),
+                    doc.querySelector('.block-container')
+                  ].filter(Boolean);
+                  containers.forEach(el => { try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {} });
+                  try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0, 0) : window.scrollTo(0, 0)); } catch (e) {}
+                } catch (err) {}
+                if (++frames < MAX_FRAMES) requestAnimationFrame(doScroll);
+              }
+              requestAnimationFrame(doScroll);
+            })();
+            </script>
+            """,
+            height=1,
+        )
+    except Exception:
+        pass
     
     # Apply page styles
     if STYLES_AVAILABLE:

@@ -215,19 +215,28 @@ elif st.session_state['previous_page'] != selection:
           function forceScrollToTop() {
             try {
               const doc = window.parent && window.parent.document ? window.parent.document : document;
-              const html = doc.documentElement;
-              const body = doc.body;
-              const main = doc.querySelector('section.main') || doc.querySelector('.main') || doc.querySelector('.block-container');
-              
+              // Collect all possible scroll containers including Streamlit view container
+              const containers = [
+                doc.documentElement,
+                doc.body,
+                doc.querySelector('[data-testid="stAppViewContainer"]'),
+                doc.querySelector('[data-testid="block-container"]'),
+                doc.querySelector('section.main'),
+                doc.querySelector('.main'),
+                doc.querySelector('.block-container')
+              ].filter(Boolean);
+
               // Force scroll behavior to auto and scroll to top
-              [html, body, main].forEach(el => {
-                if (el) {
-                  try { 
-                    el.style.scrollBehavior = 'auto'; 
-                    el.scrollTop = 0; 
-                  } catch (e) {}
-                }
+              containers.forEach(el => {
+                try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {}
               });
+
+              // Also attempt to reset any nested containers that match these selectors
+              try {
+                doc.querySelectorAll('[data-testid="stAppViewContainer"], [data-testid="block-container"], section.main, .main, .block-container').forEach(el => {
+                  try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {}
+                });
+              } catch (e) {}
               
               // Also try window scroll
               try { 
@@ -319,8 +328,8 @@ if selection in specialized_pages:
 
 # Check if the selected page has a create_layout function
 if hasattr(page, 'create_layout'):
-    # Special handling for Technical Assistance page to ensure scroll to top
-    if selection == "🔧 Technical Assistance":
+    # Special handling for key pages to ensure scroll to top prior to render
+    if selection in ["🔧 Technical Assistance", "🏠 Overview", "📚 Knowledge Development & Dissemination"]:
         # Force scroll to top before calling the page
         st.markdown("""
         <script>
@@ -328,10 +337,10 @@ if hasattr(page, 'create_layout'):
             function forceScrollToTop() {
                 try {
                     // Multiple scroll methods
-                    window.scrollTo({top: 0, behavior: 'instant'});
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                    
+                    try { window.scrollTo({top: 0, behavior: 'instant'}); } catch (e) { try { window.scrollTo(0,0); } catch (e2) {} }
+                    try { document.documentElement.scrollTop = 0; } catch (e) {}
+                    try { document.body.scrollTop = 0; } catch (e) {}
+
                     // Find and scroll all possible containers
                     const selectors = [
                         'main', '.main', '.stApp', 
@@ -339,18 +348,18 @@ if hasattr(page, 'create_layout'):
                         '[data-testid="block-container"]',
                         'section.main', '.css-1d391kg'
                     ];
-                    
+
                     selectors.forEach(selector => {
-                        const elements = document.querySelectorAll(selector);
-                        elements.forEach(element => {
-                            if (element && element.scrollTop !== undefined) {
-                                element.scrollTop = 0;
-                            }
-                        });
+                        try {
+                            const elements = document.querySelectorAll(selector);
+                            elements.forEach(element => {
+                                try { if (element && element.scrollTop !== undefined) { element.style.scrollBehavior = 'auto'; element.scrollTop = 0; } } catch (e) {}
+                            });
+                        } catch (e) {}
                     });
                 } catch (e) {}
             }
-            
+
             // Execute immediately and with delays
             forceScrollToTop();
             setTimeout(forceScrollToTop, 10);
@@ -359,7 +368,7 @@ if hasattr(page, 'create_layout'):
         })();
         </script>
         """, unsafe_allow_html=True)
-    
+
     page.create_layout()
 else:
     st.error("The selected page does not have a create_layout function.")
@@ -387,14 +396,23 @@ if st.session_state.get('_scroll_to_top', False):
               if (anchor && typeof anchor.scrollIntoView === 'function') {
                 try { anchor.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' }); } catch (e) {}
               }
-              const html = doc.documentElement;
-              const body = doc.body;
-              const main = doc.querySelector('section.main') || doc.querySelector('.main') || doc.querySelector('.block-container');
-              [html, body, main].forEach(el => {
-                if (el) {
+              // Collect and reset all common containers, including Streamlit's app view container
+              const containers = [
+                doc.documentElement,
+                doc.body,
+                doc.querySelector('[data-testid="stAppViewContainer"]'),
+                doc.querySelector('[data-testid="block-container"]'),
+                doc.querySelector('section.main'),
+                doc.querySelector('.main'),
+                doc.querySelector('.block-container')
+              ].filter(Boolean);
+              containers.forEach(el => { try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {} });
+              // Also try resetting any additional matches
+              try {
+                doc.querySelectorAll('[data-testid="stAppViewContainer"], [data-testid="block-container"], section.main, .main, .block-container').forEach(el => {
                   try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {}
-                }
-              });
+                });
+              } catch (e) {}
               try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0, 0) : window.scrollTo(0, 0)); } catch (e) {}
             } catch (err) {}
             if (++frames < MAX_FRAMES) requestAnimationFrame(doScroll);
