@@ -1,5 +1,43 @@
 # YEAP Data Analysis Dashboard Guide
 
+
+📑 Table of Contents
+
+📋 Project Overview
+
+🏠 Overview Page (Survey Overview)
+
+🔗 Project Links
+
+📊 General Survey Analysis Page
+
+📈 Specialized Analysis Pages
+
+🔧 Technical Implementation Details
+
+📊 Data Quality Standards
+
+🚀 Usage Guide
+
+📁 Project File Structure
+
+🧭 Beginner Deployment Guide
+
+1. Prerequisites
+
+2. Local Setup
+
+3. Page Structure
+
+4. Uploading from Local to GitHub
+
+5. Deploying to Streamlit Cloud
+
+6. Troubleshooting
+
+🪄 YEAP Dashboard Title Modification Guide
+
+
 ## 📋 Project Overview
 
 The **YEAP (Youth Employment Action Programme) Data Analysis Dashboard** is an interactive data visualization platform built with **Streamlit** to analyze survey data related to the Youth Employment Action Plan.
