@@ -45,7 +45,7 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 ## 📊 General Survey Analysis 页面 (通用调查分析)
 
 ### 页面功能 Page Functions
-- **多问题分析**: 支持 Q1-Q5 所有问题的可视化分析
+- **多问题分析**: 支持所有问题的可视化分析
 - **多图表类型**: 自动选择最适合的图表类型（饼图、条形图、横向条形图）
 - **交互式功能**: 提供问题选择和图表类型切换功能
 
@@ -66,8 +66,8 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
   - `option`列 → 图表分类标签
   - `count`列 → 图表数值
 - **数据过滤**: 
-  - Q4和Q5问题：过滤掉少于5%的选项和"其他"选项
-  - Q2问题：显示所有选项（是/否问题不过滤）
+  - Q4和Q5问题：过滤掉"其他"选项
+  - Q2问题：显示所有选项（不过滤）
 
 #### 数据表格显示 Data Table Display
 - **显示内容**: 选项名称、数量、百分比
@@ -221,15 +221,14 @@ YEAP (Youth Employment Action Programme) 数据分析仪表板是一个基于 St
 - 只统计符合标准的有效记录
 
 ### 数据筛选规则 Data Filtering Rules
-- **百分比阈值**: 小于5%的选项可能被过滤（Q4、Q5）
-- **地区显示**: 地区分布图只显示前10个地区
+- **百分比阈值**: other选项可能被过滤
 - **年份筛选**: 支持按具体年份筛选数据
 
 ---
 
 ## 🚀 使用指南 Usage Guide
 
-### 启动应用 Starting the Application
+### 本地启动应用 Starting the Application
 ```bash
 cd streamlit
 streamlit run streamlit_app.py
@@ -308,10 +307,10 @@ emplabyeap-main/
 ## 2. 本地设置
 
 1.  **下载项目**: 获取项目文件（例如，通过下载 ZIP 文件或如果您已有仓库则克隆）。
-    -   将项目解压到 `C:\Users\您的用户名\Desktop\yeap-10-10` 等位置。
+    -   将项目解压到 `C:\Users\您的用户名\Desktop\yeap` 等位置。
 
-2.  **打开终端**: 在您的终端（Windows 上为 PowerShell）中导航到项目根目录 (`yeap-10-10`)。
-    -   在文件资源管理器中，右键单击 `yeap-10-10` 文件夹内部，然后选择"在此处打开终端"或"在此处打开 PowerShell 窗口"。
+2.  **打开终端**: 在您的终端（Windows 上为 PowerShell）中导航到项目根目录 (`yeap`)。
+    -   在文件资源管理器中，右键单击 `yeap` 文件夹内部，然后选择"在此处打开终端"或"在此处打开 PowerShell 窗口"。
 
 3.  **安装依赖**: Streamlit 应用程序需要特定的 Python 库。这些库列在 `streamlit/requirements.txt` 中。
     -   激活环境（如果需要）：
@@ -353,9 +352,7 @@ YEAP Dashboard 包含以下页面：
 - **Capacity Development**: "💪 能力发展" / "能力建设和培训项目分析"
 - **Advocacy & Partnerships**: "🤝 倡导与合作" / "倡导活动和合作伙伴关系分析"
 
-如需修改页面标题，请参考 `独立页面标题修改说明.md` 文档。
-
-## 4. 上传到 GitHub
+## 4. 从本地上传到 GitHub
 
 本项目包含一个 PowerShell 脚本示例 (`upload_to_github_example.ps1`)，用于简化将代码上传到 GitHub 仓库的过程。
 
@@ -366,7 +363,7 @@ YEAP Dashboard 包含以下页面：
     -   点击“创建仓库”。
 
 2.  **在本地初始化 Git**: 如果您的项目文件夹尚未是 Git 仓库，您需要对其进行初始化。
-    -   在 `yeap-10-10` 项目根目录中打开终端。
+    -   在 `yeap` 项目根目录中打开终端。
     -   初始化 Git：
         ```bash
         git init
@@ -387,7 +384,7 @@ YEAP Dashboard 包含以下页面：
 
 4.  **运行上传脚本**: 
     -   **重要**: 在运行脚本之前，请将 `upload_to_github_example.ps1` 重命名为 `upload_to_github.ps1`，并打开该文件，将文件末尾的 GitHub 仓库 URL `https://github.com/your_username/your_repository.git` 替换为您自己仓库的实际 URL。
-    -   确保您的终端位于 `yeap-10-10` 项目根目录中。
+    -   确保您的终端位于 `yeap` 项目根目录中。
     -   执行 PowerShell 脚本：
         ```bash
         .\upload_to_github.ps1
@@ -453,8 +450,8 @@ Streamlit Cloud 可以轻松地直接从 GitHub 部署您的 Streamlit 应用程
 如果您遇到其他问题，请：
 1. 检查终端输出的错误信息
 2. 确认所有文件路径正确
-3. 参考 `Data_Sources_Documentation.md` 了解数据结构
-4. 查看 `独立页面标题修改说明.md` 了解页面定制
+3. 了解数据结构
+4. 查看 `YEAP 仪表板标题修改指南` 了解页面定制
 
 ---
 
