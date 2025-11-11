@@ -1,3 +1,1063 @@
+# YEAP Data Analysis Dashboard Guide
+
+## 📋 Project Overview
+
+The **YEAP (Youth Employment Action Programme) Data Analysis Dashboard** is an interactive data visualization platform built with **Streamlit** to analyze survey data related to the Youth Employment Action Plan.
+
+The dashboard contains five main pages, providing comprehensive insights from overall survey results to specialized thematic analysis.
+
+### Page Structure
+
+1. **🏠 Overview** – Survey overview page
+2. **📚 Knowledge Development & Dissemination** – Analysis of knowledge products and dissemination outputs
+3. **🔧 Technical Assistance** – Analysis of technical assistance-related outputs
+4. **🎓 Capacity Development** – Analysis of capacity development activities
+5. **🤝 Advocacy & Partnerships** – Analysis of advocacy initiatives and partnership-related outputs
+
+---
+
+## 🏠 Overview Page (Survey Overview)
+
+### Page Functions
+
+* **Comprehensive Overview**
+  Provides a high-level overview of survey responses and key findings.
+
+* **Q2 Data Visualization**
+  Displays a pie chart for core survey questions based on Q2 data.
+
+* **Q3–Q5 Summary Tables**
+  Shows aggregated data on:
+
+  * Implementation framework clusters
+  * Policy pillars
+  * Target youth groups
+
+### Data File Locations
+
+* **Q2 Data**
+
+  * `orignaldata/PART1_base_dataQ2-5.csv`
+* **Q3–Q5 Data**
+
+  * `orignaldata/PART2_base_dataQ3.csv`
+  * `orignaldata/PART2_base_dataQ4.csv`
+  * `orignaldata/PART2_base_dataQ5.csv`
+
+### Display Content
+
+1. **Unified Header**
+
+   * Blue background container
+   * Displays ILO logo
+   * Shows year-based title related to the reporting period
+
+2. **Q2 Pie Chart**
+
+   * Visualizes responses to core Q2 questions using PART1 data.
+
+3. **Q3–Q5 Summary Tables**
+
+   * Provides summary tables for:
+
+     * Clusters of the implementation framework
+     * Policy and programmatic areas
+     * Target youth groups
+
+---
+
+## 🔗 Project Links
+
+* **GitHub Repository:** `https://github.com/emplabyouth/emplabyeap`
+* **Git Clone URL:** `https://github.com/emplabyouth/emplabyeap.git`
+* **Streamlit Cloud Console:** `https://streamlit.io/cloud` (login with GitHub)
+* **Deployed Streamlit App:** `https://emplabyeap.streamlit.app`
+
+---
+
+## 📊 General Survey Analysis Page
+
+### Page Functions
+
+* Supports visualization of **all** survey questions.
+* Automatically selects the most appropriate chart type:
+
+  * Pie chart
+  * Vertical bar chart
+  * Horizontal bar chart
+* Provides interactive controls for:
+
+  * Selecting survey questions
+  * Switching chart types
+
+### Data File Location
+
+* **Main data file:** `orignaldata/PART1_base_dataQ2-5.csv`
+* **Data format:**
+
+  * `question` – Question text
+  * `option` – Response option
+  * `count` – Count of responses
+
+### Chart Creation Logic
+
+#### Auto Chart Selection Logic
+
+* **Pie Chart**
+
+  * Used when the number of options is **≤ 5**.
+
+* **Vertical Bar Chart**
+
+  * Used when:
+
+    * Number of options > 5, or
+    * Label text is relatively long.
+
+* **Horizontal Bar Chart**
+
+  * Used when:
+
+    * Number of options > 10, or
+    * Label length > 20 characters.
+
+#### Data Processing Rules
+
+* **Column Mapping**
+
+  * `question` → Chart title
+  * `option` → Category label
+  * `count` → Numerical value in charts
+
+* **Filtering Rules**
+
+  * For **Q4** and **Q5** questions:
+
+    * Exclude options labeled **“Other”**.
+  * For **Q2**:
+
+    * Display **all** options (no filtering).
+
+#### Data Table Display
+
+* Displayed contents:
+
+  * Option name
+  * Count
+  * Percentage
+* Sorting:
+
+  * Sorted by count in **descending** order.
+* Percentage:
+
+  * Automatically calculated for each option.
+
+---
+
+## 📈 Specialized Analysis Pages
+
+### Page Functions
+
+The specialized analysis pages provide:
+
+* **Independent page titles and subtitles** for each thematic area.
+* **Outputs count comparison** across different question categories.
+* **Thematic frequency analysis** organized by major themes.
+* **Filtering options**:
+
+  * By department/region
+  * By year
+* **Multi-dimensional analysis**, including:
+
+  * Funding sources
+  * Target youth groups
+  * Delivery modalities
+  * Geographic focus
+
+### Page Title System
+
+Each specialized page has its own configured titles:
+
+#### 📊 Outputs Count Statistics
+
+* **Main title:** `📊 Outputs Count Statistics`
+* **Subtitle:** `Overview of output counts across all analysis areas`
+
+#### 📚 Knowledge Development & Dissemination
+
+* **Main title:** `📚 Knowledge Development & Dissemination`
+* **Subtitle:** `Analysis of knowledge development and dissemination outputs`
+
+#### 🔧 Technical Assistance
+
+* **Main title:** `🔧 Technical Assistance`
+* **Subtitle:** `Analysis of technical assistance outputs and delivery`
+
+#### 🎓 Capacity Development
+
+* **Main title:** `🎓 Capacity Development`
+* **Subtitle:** `Analysis of capacity development programs and outcomes`
+
+#### 🤝 Advocacy & Partnerships
+
+* **Main title:** `🤝 Advocacy & Partnerships`
+* **Subtitle:** `Analysis of advocacy initiatives and partnership activities`
+
+### Data File Locations
+
+* **Q6 – Knowledge Development & Dissemination:**
+  `orignaldata/PART3_base_dataQ6.csv`
+* **Q7 – Technical Assistance:**
+  `orignaldata/PART3_base_dataQ7.csv`
+* **Q10 – Capacity Development:**
+  `orignaldata/PART3_base_dataQ10.csv`
+* **Q11 – Advocacy & Partnerships:**
+  `orignaldata/PART3_base_dataQ11.csv`
+
+### Filtering Features
+
+* **Region Filter**
+
+  * Based on `Department/Region` field.
+
+* **Year Filter**
+
+  * Global year selector.
+
+* **Real-time Application**
+
+  * Selected filters are applied instantly to all relevant charts and tables.
+
+### Page Layout Structure
+
+#### 1. Outputs Count Comparison
+
+* **Chart Title:** `Outputs Count by Question`
+* **Data Source:** Combined data from Q6, Q7, Q10, and Q11.
+* **Indicators:**
+
+  * Number of staff reporting
+  * Number of outputs delivered
+* **Chart Type:** Grouped bar chart.
+
+#### 2. Themed Frequency Analysis
+
+Powered by the `Q6Q7Q10Q11DataProcessor` class, which:
+
+* Merges multiple data sources
+* Performs dynamic statistics
+* Applies filters in real time
+
+##### Theme 1: Q6 – Knowledge Development & Dissemination
+
+* **Background:** Light blue
+* **Processing:**
+
+  * Recalculates `works_count`
+  * Identifies valid outputs and unique contributors
+* **Dimensions:**
+
+  * Funding sources
+  * Target groups
+  * Types of knowledge and dissemination outputs delivered
+
+##### Theme 2: Q7 – Technical Assistance
+
+* **Background:** Light green
+* **Dimensions:**
+
+  * Funding sources
+  * Target groups
+  * Regional distribution (`Technical Assistance Outputs Across Regions`, top 10 regions)
+
+##### Theme 3: Q10 – Capacity Development
+
+* **Background:** Light yellow
+* **Dimensions:**
+
+  * Delivery modes
+  * Funding sources
+  * Certification status
+  * Target groups
+
+##### Theme 4: Q11 – Advocacy & Partnerships
+
+* **Background:** Light pink
+* **Dimensions:**
+
+  * Funding sources
+  * Target groups
+  * Types of advocacy or partnership outputs
+  * Regional distribution (`Advocacy & Partnership Outputs Across Regions`, top 10 regions)
+  * Geographical focus of outputs
+
+### Chart Style Guidelines
+
+* **Pie Charts**
+
+  * Show share of each category
+  * Display exact counts and percentages for each slice
+
+* **Bar Charts**
+
+  * Show comparisons across multiple categories
+  * Applied when categories are more numerous or labels are longer
+
+* **Automatic Selection**
+
+  * Chart type is automatically selected based on:
+
+    * Number of options
+    * Length of labels
+    * Layout clarity
+
+---
+
+## 🔧 Technical Implementation Details
+
+### System Architecture
+
+* **Frontend Framework:** Streamlit
+* **Data Processing:** Pandas
+* **Charting Library:** Plotly
+* **Styling:**
+
+  * `StreamlitStyleManager` class
+  * CSS variable system
+  * Unified color scheme
+* **Modular Design:**
+
+  * Separated page components
+  * Style management
+  * Color configuration
+
+### Core Modules
+
+* `streamlit_app.py`
+
+  * Main entry point
+  * Page configuration
+  * Navigation
+  * Global filters (year, department/region)
+
+* `st_landing_dashboard.py`
+
+  * Overview page
+  * Q2 pie chart
+  * Q3–Q5 summary tables
+
+* `st_q6q7q10q11_dashboard.py`
+
+  * Specialized analysis page for Q6, Q7, Q10, Q11
+
+* `st_styles.py`
+
+  * `StreamlitStyleManager`
+  * Global style configuration
+  * Standardized chart layout
+
+* `color_config.py`
+
+  * Centralized color palette and theme configuration
+
+### Unified Header Design
+
+* Blue background container: `RGB(33, 45, 183)`
+* Displays the ILO logo on the left
+* Shows a dynamic year-based reporting title
+* Responsive layout for different screen sizes
+
+### Data Processing Workflow
+
+1. **Secure Data Loading**
+
+   * Uses `safe_read_csv` to:
+
+     * Auto-detect encoding
+     * Handle file read errors
+
+2. **Global Filters**
+
+   * Manages year and department/region filters with `st.session_state`.
+
+3. **Preprocessing**
+
+   * `Q6Q7Q10Q11DataProcessor`:
+
+     * Merges relevant data
+     * Cleans and standardizes fields
+
+4. **Dynamic Aggregation**
+
+   * Recalculates statistics on the fly instead of relying on pre-aggregated results.
+
+5. **Standardized Visualization**
+
+   * Uses `StreamlitStyleManager` to:
+
+     * Apply consistent visual styles
+     * Handle label wrapping
+     * Configure layout parameters
+
+6. **Responsive Layout**
+
+   * Adjusts chart and table display based on content and screen size.
+
+### Performance Optimization
+
+* **Session Caching**
+
+  * Data loaded only once per session.
+
+* **Real-time Filtering**
+
+  * Filters applied without reloading data files.
+
+* **Smart Chart Selection**
+
+  * Adapts visualization types to data structure for clarity and performance.
+
+### Error Handling
+
+* **File Existence Checks**
+
+  * Verifies required CSV files.
+
+* **Data Validation**
+
+  * Ensures expected columns and formats are present.
+
+* **User-Friendly Messages**
+
+  * Provides clear instructions and hints when issues occur.
+
+---
+
+## 📊 Data Quality Standards
+
+### Data Integrity Requirements
+
+* Project name fields must not be empty.
+* Numeric fields cannot be:
+
+  * `'None'`
+  * `'nan'`
+  * Empty strings
+* Only valid records are included in statistics.
+
+### Data Filtering Rules
+
+* **“Other” Options**
+
+  * May be excluded for clarity in certain charts.
+* **Year Filtering**
+
+  * Supports restricting data to selected reporting years.
+
+---
+
+## 🚀 Usage Guide
+
+### Starting the Application Locally
+
+```bash
+cd streamlit
+streamlit run streamlit_app.py
+```
+
+### Navigation
+
+1. Use the **sidebar navigation menu** to switch between:
+
+   * Overview
+   * Outputs Count Statistics
+   * Knowledge Development & Dissemination
+   * Technical Assistance
+   * Capacity Development
+   * Advocacy & Partnerships
+
+2. Use **global filters** in the sidebar:
+
+   * Select specific year or “All”
+   * Select department/region where applicable
+
+3. **Interactive features:**
+
+   * Click or hover on chart elements to see more details.
+
+### Data Filtering
+
+1. **Year Filter**
+
+   * Choose a specific year.
+   * Or select “All” to view all years combined.
+
+2. **Region / Department Filter**
+
+   * On specialized pages, select specific organizational units.
+
+3. **Real-time Updates**
+
+   * All charts and tables update immediately when filters change.
+
+### Chart Interaction
+
+* **Hover Tooltips:**
+
+  * View detailed numerical values.
+* **Zooming & Panning:**
+
+  * Explore chart details interactively.
+* **Download Option:**
+
+  * Export charts as images when enabled.
+
+---
+
+## 📁 Project File Structure
+
+```bash
+emplabyeap-main/
+├── orignaldata/                      # Raw data directory
+│   ├── PART1_base_dataQ2-5.csv       # Q2 pie chart & general survey analysis
+│   ├── PART2_base_dataQ3.csv         # Q3 summary (implementation framework)
+│   ├── PART2_base_dataQ4.csv         # Q4 summary (policy pillars)
+│   ├── PART2_base_dataQ5.csv         # Q5 summary (target groups)
+│   ├── PART3_base_dataQ6.csv         # Q6 - Knowledge Dev. & Dissemination
+│   ├── PART3_base_dataQ7.csv         # Q7 - Technical Assistance
+│   ├── PART3_base_dataQ10.csv        # Q10 - Capacity Development
+│   ├── PART3_base_dataQ11.csv        # Q11 - Advocacy & Partnerships
+│   ├── logo.png                      # ILO logo
+│   └── question_list.csv             # Full question list
+├── streamlit/                        # Streamlit application directory
+│   ├── streamlit_app.py              # Main entry, navigation, global filters
+│   ├── st_landing_dashboard.py       # Overview: Q2 + Q3–Q5 summary
+│   ├── st_q6q7q10q11_dashboard.py    # Specialized analysis: Q6/Q7/Q10/Q11
+│   ├── st_styles.py                  # Global styles and theming
+│   ├── color_config.py               # Common color configuration
+│   ├── visualizer.py                 # Visualization helpers
+│   ├── assets/fonts/                 # Font resources
+│   ├── pages/                        # Optional: additional pages (if enabled)
+│   └── requirements.txt              # Python dependencies for Streamlit app
+├── start_dashboard.py                # Local start script
+├── upload_to_github_example.ps1      # Example Git upload script
+├── requirements.txt                  # Project-level dependencies
+└── readme.md                         # Project documentation (this file)
+```
+
+---
+
+# YEAP Dashboard – Beginner Guide
+
+This section explains, step by step, how to:
+
+1. Set up the YEAP Dashboard locally
+2. Upload it to GitHub
+3. Deploy it on Streamlit Cloud
+
+All operational steps from the original guide are included below without omission.
+
+## 1. Prerequisites
+
+Before you begin, ensure you have the following installed and configured:
+
+* **Git**
+
+  * Used for version control and syncing with GitHub.
+  * Download: `https://git-scm.com/downloads`
+
+* **Python**
+
+  * Programming language used by the dashboard.
+  * Download: `https://www.python.org/downloads/`
+
+* **Streamlit**
+
+  * Framework for building the dashboard.
+  * Install via pip:
+
+    ```bash
+    pip install streamlit
+    ```
+
+* **GitHub Account**
+
+  * For hosting your repository.
+  * Sign up: `https://github.com/join`
+
+* **Streamlit Cloud Account**
+
+  * For deploying your dashboard online.
+  * Sign up: `https://streamlit.io/cloud`
+
+## 2. Local Setup
+
+1. **Download the Project**
+
+   * Obtain the project files:
+
+     * Either by downloading a ZIP file, or
+     * By cloning an existing repository (if available).
+   * Extract or place the project folder in a simple path, e.g.:
+     `C:\Users\<YourUsername>\Desktop\yeap`
+
+2. **Open Terminal in the Project Directory**
+
+   * On Windows:
+
+     * Open File Explorer
+     * Navigate into the `yeap` project folder
+     * Right-click inside the folder
+     * Select **“Open in Terminal”** or **“Open PowerShell window here”**
+   * On macOS/Linux:
+
+     * Open Terminal and run:
+
+       ```bash
+       cd /path/to/yeap
+       ```
+
+3. **Create and Activate a Virtual Environment (Optional but Recommended)**
+
+   * Example using `venv`:
+
+     ```bash
+     python -m venv .venv
+     ```
+   * Activate (Windows PowerShell):
+
+     ```bash
+     .\.venv\Scripts\Activate.ps1
+     ```
+   * Activate (macOS/Linux):
+
+     ```bash
+     source .venv/bin/activate
+     ```
+
+4. **Install Dependencies**
+
+   * The Streamlit app dependencies are listed in:
+
+     * `streamlit/requirements.txt`
+   * In your activated environment, run:
+
+     ```bash
+     pip install -r streamlit/requirements.txt
+     ```
+
+5. **Run the Dashboard Locally**
+
+   * Ensure your environment is activated.
+   * From the project root (same directory as `start_dashboard.py`), run:
+
+     ```bash
+     python start_dashboard.py
+     ```
+   * The script will:
+
+     * Launch Streamlit
+     * Open your default browser at:
+
+       * `http://localhost:8501` (or similar)
+   * You should now see the YEAP Dashboard running locally.
+
+## 3. Page Structure (Within the Running App)
+
+The YEAP Dashboard typically includes:
+
+1. **🏠 Home**
+
+   * Project introduction and overview.
+
+2. **📊 Overview**
+
+   * High-level data overview and basic statistics.
+
+3. **📊 Outputs Count Statistics**
+
+   * Comparative analysis of outputs across clusters/questions.
+
+4. **🌱 Knowledge Development & Dissemination**
+
+   * Detailed analysis of knowledge products and dissemination outputs.
+
+5. **🔧 Technical Assistance**
+
+   * Analysis of technical support and advisory activities.
+
+6. **💪 Capacity Development**
+
+   * Analysis of trainings, workshops, and capacity-building initiatives.
+
+7. **🤝 Advocacy & Partnerships**
+
+   * Analysis of advocacy initiatives and partnership-based outputs.
+
+Each specialized page:
+
+* Has a clearly defined **main title** and **subtitle**.
+* Focuses on one dimension of the Youth Employment Action Plan.
+
+## 4. Uploading from Local to GitHub
+
+A sample PowerShell script `upload_to_github_example.ps1` is included to simplify the upload process.
+
+### Step-by-Step
+
+1. **Create a New GitHub Repository**
+
+   * Go to: `https://github.com/new`
+   * Enter a repository name, e.g. `YEAP-Dashboard`
+   * **Important:**
+
+     * Do **NOT** initialize with:
+
+       * README
+       * `.gitignore`
+       * License
+     * These are already in your local project.
+   * Click **“Create repository”**.
+
+2. **Initialize Git Locally (If Not Already Done)**
+
+   In the project root (`yeap`):
+
+   ```bash
+   git init
+   ```
+
+3. **Configure Remote Origin**
+
+   * On your GitHub repository page, copy the HTTPS URL, e.g.:
+
+     * `https://github.com/<your_username>/YEAP-Dashboard.git`
+
+   * In your terminal:
+
+     ```bash
+     git remote add origin https://github.com/<your_username>/YEAP-Dashboard.git
+     ```
+
+   * If `origin` already exists and points elsewhere:
+
+     ```bash
+     git remote remove origin
+     git remote add origin https://github.com/<your_username>/YEAP-Dashboard.git
+     ```
+
+4. **Prepare the Upload Script**
+
+   * Rename:
+
+     * `upload_to_github_example.ps1` → `upload_to_github.ps1`
+   * Open `upload_to_github.ps1` in a text editor.
+   * At the bottom of the script:
+
+     * Replace the placeholder:
+
+       * `https://github.com/your_username/your_repository.git`
+       * with your actual GitHub repository URL.
+
+5. **Run the Upload Script**
+
+   From the project root in PowerShell:
+
+   ```bash
+   .\upload_to_github.ps1
+   ```
+
+   The script will:
+
+   * Check Git status.
+   * Add all modified and new files.
+   * Prompt you for a commit message:
+
+     * You may press **Enter** to accept the default.
+   * Attempt to push to GitHub:
+
+     * If a normal push fails (e.g. due to remote changes), it may:
+
+       * Attempt a forced push depending on script configuration.
+   * Print:
+
+     * Your GitHub repository URL.
+     * A suggested link for checking Streamlit Cloud deployment.
+
+## 5. Deploying to Streamlit Cloud
+
+Streamlit Cloud allows you to deploy directly from your GitHub repository.
+
+1. **Open Streamlit Cloud**
+
+   * Visit: `https://share.streamlit.io/` or `https://streamlit.io/cloud`
+
+2. **Log In**
+
+   * Use your GitHub account to sign in.
+
+3. **Create a New App**
+
+   * Click **“New app”**.
+   * Select **“From existing repo”**.
+
+4. **Configure Deployment**
+
+   * **Repository:**
+     `your_username/YEAP-Dashboard`
+   * **Branch:**
+     Usually `main` (or `master` if applicable).
+   * **Main file path:**
+     `streamlit/streamlit_app.py`
+   * **Python version:**
+     Choose a supported version, e.g. `3.9` or `3.10`.
+   * **Advanced Settings (Optional):**
+
+     * **Secrets:**
+       Add only if your app connects to external APIs or sensitive data.
+     * **Custom command:**
+       Not required for a standard Streamlit app.
+
+5. **Deploy**
+
+   * Click **“Deploy!”**.
+   * Streamlit Cloud will:
+
+     * Install dependencies from `requirements.txt` / `streamlit/requirements.txt`
+     * Run `streamlit_app.py`
+   * After build completion:
+
+     * You receive a public URL for your dashboard.
+
+---
+
+## 6. Troubleshooting
+
+### Common Issues & Solutions
+
+1. **Python Dependency Issues**
+
+   * Ensure Python version is **3.7 or above**.
+   * If installation fails:
+
+     ```bash
+     python -m pip install --upgrade pip
+     pip install -r streamlit/requirements.txt
+     ```
+
+2. **Streamlit Startup Problems**
+
+   * Check if port `8501` is already in use.
+   * Run on another port:
+
+     ```bash
+     streamlit run streamlit/streamlit_app.py --server.port 8502
+     ```
+
+3. **GitHub Upload Issues**
+
+   * Confirm Git username and email are configured:
+
+     ```bash
+     git config --global user.name "Your Name"
+     git config --global user.email "you@example.com"
+     ```
+   * Check network connectivity.
+   * Ensure remote repository URL is correct.
+   * If push is rejected:
+
+     * Pull first or adjust script/force push as appropriate.
+
+4. **Missing or Incorrect Data Files**
+
+   * Ensure all required CSVs are inside `orignaldata/`.
+   * Verify:
+
+     * File names exactly match the ones referenced in code.
+     * No typo in paths.
+
+### How to Get Help
+
+If issues persist:
+
+1. Read the full error message shown in the terminal.
+2. Confirm file paths and filenames.
+3. Verify the structure of your CSV files.
+4. Review this README and the **Title Modification Guide** below.
+
+---
+
+# YEAP Dashboard Title Modification Guide
+
+This document explains how to modify titles using text search, without relying on fixed line numbers—making it robust to future code changes.
+
+## Project Structure (Relevant Files)
+
+* `streamlit_app.py` – Main entry; navigation menu.
+* `st_landing_dashboard.py` – Overview page.
+* `st_q6q7q10q11_dashboard.py` – Detailed thematic dashboards.
+* `st_styles.py` – Styling configuration.
+
+## Types of Titles & How to Modify Them
+
+### 1. Page Main Titles
+
+**Search Keyword:** `st.title(`
+**Files:** `st_landing_dashboard.py`, `st_q6q7q10q11_dashboard.py`
+
+**Example:**
+
+```python
+# Original:
+st.title("📊 General Overview")
+# Change to:
+st.title("📊 Your New Title")
+```
+
+### 2. Unified Page Header
+
+**Search Keyword:** `create_unified_header`
+**File:** `st_q6q7q10q11_dashboard.py`
+
+**What to Edit:**
+
+* Main header text:
+
+  * Search for: `"ILO Youth Employment Action Plan (YEAP):"`
+* Year-related text:
+
+  * Search for: `f"{selected_year} Reporting"`
+
+Modify the strings as needed while keeping function calls intact.
+
+### 3. Navigation Menu Titles
+
+**Search Keyword:** `PAGES = {`
+**File:** `streamlit_app.py`
+
+**Example:**
+
+```python
+PAGES = {
+    "🏠 Overview": st_landing_dashboard,
+    "📊 Clusters Of The Implementation Framework": st_q6q7q10q11_dashboard,
+}
+```
+
+You may rename the keys (left-hand strings) to adjust sidebar labels.
+
+### 4. Page-Specific Titles
+
+**Search Keyword:** `page_titles = {`
+**File:** `st_q6q7q10q11_dashboard.py`
+
+This dictionary may include:
+
+* `"📊 Clusters Of The Implementation Framework"`
+* `"📚 Knowledge Development & Dissemination"`
+* `"🔧 Technical Assistance"`
+* `"🎓 Capacity Development"`
+* `"🤝 Advocacy & Partnerships"`
+
+Edit the mapped strings to update visible titles accordingly.
+
+### 5. Chart Titles
+
+**Examples of Search Terms:**
+
+* `"Number of Outputs Delivered by Cluster"`
+* `"Distribution of Responses on Whether Entities Conducted Youth Employment Work"`
+* `"📋 Outputs Detail List"`
+
+**Files:**
+
+* Located mainly in:
+
+  * `st_landing_dashboard.py`
+  * `st_q6q7q10q11_dashboard.py`
+
+Search by the exact title string and replace with your desired wording.
+
+### 6. Subtitles & Descriptive Text
+
+**Search Keywords:**
+
+* `st.subheader(`
+* `st.markdown("###`
+* Long-form explanatory text strings.
+
+**Files:** All dashboard-related `.py` files.
+
+You can adjust these for explanatory clarity, language localization, or branding.
+
+---
+
+## Recommended Editing Steps
+
+1. **Identify the Type of Text to Modify**
+
+   * Page title? → search `st.title(`
+   * Sidebar navigation? → search `PAGES = {`
+   * Thematic page title? → search `page_titles = {`
+   * Chart title? → search the current text.
+   * Subheader/text? → search `st.subheader(` or markdown calls.
+
+2. **Use Global Search**
+
+   * Use your editor's:
+
+     * `Ctrl+F` for file search
+     * `Ctrl+Shift+F` (or equivalent) for project-wide search
+
+3. **Edit Safely**
+
+   * Keep emojis if used for structure and recognizability.
+   * Only replace text within the quotes.
+   * Do not alter Python syntax.
+
+4. **Test After Changes**
+
+   * Save files.
+   * Restart the Streamlit app:
+
+     ```bash
+     streamlit run streamlit/streamlit_app.py
+     ```
+   * Verify that all modified titles display correctly.
+
+---
+
+## Notes & Good Practices
+
+1. **Consistency**
+
+   * Ensure related titles are updated consistently across files and pages.
+
+2. **Formatting**
+
+   * Keep emojis, capitalization, and spacing consistent with project style.
+
+3. **Backup**
+
+   * Consider backing up files or using Git commits before large-scale edits.
+
+4. **Encoding**
+
+   * Ensure UTF-8 encoding for multilingual content.
+
+5. **Bulk Changes**
+
+   * Use “Find and Replace” with caution.
+   * Always re-run and visually inspect the app after batch edits.
+
+---
+
+
+
+##Chinese 中文
+
+
+
 # YEAP 数据分析仪表板说明书 
 # YEAP Data Analysis Dashboard Guide
 
