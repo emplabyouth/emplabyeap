@@ -164,22 +164,43 @@ try:
 
     st.sidebar.header("Filters")
     
-    # Set default to 2025 if available, otherwise most recent year, otherwise 'All'
-    default_index = 0  # Default to 'All'
-    # Set default to 2024 if available, otherwise most recent year
-    if '2024' in year_options:
-        default_index = year_options.index('2024')
-    elif '2025' in year_options:
-        default_index = year_options.index('2025')
-    elif len(year_options) > 1:
-        default_index = 1  # Most recent year if neither 2024 nor 2025 available
-    
+    # ================= 终极防弹版：分离组件状态与全局状态 =================
+
+    # 1. 初始化一个真正安全的“幕后”全局变量
+    # (注意：变量名必须以 selected_year 开头，才能躲过您代码里的 _on_page_change 清理逻辑)
+    if 'selected_year_safe' not in st.session_state:
+        if '2025' in year_options:
+            st.session_state['selected_year_safe'] = '2025'
+        elif '2024' in year_options:
+            st.session_state['selected_year_safe'] = '2024'
+        elif len(year_options) > 1:
+            st.session_state['selected_year_safe'] = year_options[1]
+        else:
+            st.session_state['selected_year_safe'] = 'All'
+
+    # 2. 兜底保护：防止数据文件切换导致选项不存在
+    if st.session_state['selected_year_safe'] not in year_options:
+        st.session_state['selected_year_safe'] = 'All'
+
+    # 3. 动态计算安全的 index
+    safe_index = year_options.index(st.session_state['selected_year_safe'])
+
+    # 4. 定义回调函数：只有当用户【手动点击】下拉框时，才更新幕后变量
+    def sync_year():
+        st.session_state['selected_year_safe'] = st.session_state['selected_year_widget']
+
+    # 5. 渲染下拉框：用安全的 index 锚定它，用回调函数捕获变化
     selected_year = st.sidebar.selectbox(
         "Select Period",
         year_options,
-        index=default_index,
-        key="selected_year",
+        index=safe_index,
+        key="selected_year_widget",
+        on_change=sync_year
     )
+
+    # 6. 把最终选定的年份暴露给所有子页面使用 (维持原有的变量名)
+    st.session_state['selected_year'] = st.session_state['selected_year_safe']
+    # =================================================================
     # Expose to pages
     st.session_state['year_options'] = year_options
 except Exception as e:

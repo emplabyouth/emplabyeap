@@ -199,9 +199,9 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
     st.subheader("📊 Clusters Of The Implementation Framework")
     works_count_data = data_processor.get_works_count_data()
     if works_count_data:
-        count_fig = create_theme_count_chart(works_count_data, current_theme='Q7')
+        count_fig = create_theme_count_chart(data_processor, current_theme='Q7')
         if count_fig:
-            st.plotly_chart(count_fig, use_container_width=True)
+            st.plotly_chart(count_fig, width='stretch')
     else:
         st.info("No data available for Clusters Of The Implementation Framework")
     
@@ -226,19 +226,53 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
             break
     
     if has_frequency_data:
+        # 获取当前选中的年份
+        selected_year = st.session_state.get('selected_year', 'All')
+        
+        # 定义哪些特定的图表在选 All 时需要变成折线图
+        line_chart_targets = [
+            'Technical Assistance Outputs Across Regions'
+        ]
+        
         for field_name, chart_type, chart_title in theme_charts:
-            field_data = data_processor.get_field_distribution('Q7', field_name)
-            if field_data:
-                # Special handling for region data (top 10)
-                if 'Region' in chart_title or 'Regions' in chart_title:
-                    sorted_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
-                    field_data = sorted_data
+            
+            # ---------------- 智能拦截逻辑 ----------------
+            if selected_year == 'All' and chart_type == 'pie':
+                # 1. 饼图 -> 100% 堆叠柱状图
+                field_data = data_processor.get_time_series_distribution('Q7', field_name)
+                preserve_order = False
                 
-                # Use the same chart creation function as the original file
+            elif selected_year == 'All' and chart_title in line_chart_targets:
+                # 2. 特定的柱状图 -> 多折线图
+                field_data = data_processor.get_time_series_distribution('Q7', field_name)
+                chart_type = 'line'  # 通知底层画折线[cite: 16]
+                
+                # 折线图中的 Top 10 计算（跨年份总和）[cite: 16]
+                if 'Region' in chart_title or 'Regions' in chart_title:
+                    region_totals = {}
+                    for y, cats in field_data.items():
+                        for reg, val in cats.items():
+                            region_totals[reg] = region_totals.get(reg, 0) + val
+                    top_10 = sorted(region_totals.keys(), key=lambda k: region_totals[k], reverse=True)[:10]
+                    field_data = {y: {reg: cats[reg] for reg in top_10 if reg in cats} for y, cats in field_data.items()}
+                preserve_order = False
+                
+            else:
+                # 3. 否则走原本的 1D 数据提取逻辑
+                field_data = data_processor.get_field_distribution('Q7', field_name)
+                if field_data:
+                    # 处理 Top 10 Region[cite: 13]
+                    if 'Region' in chart_title or 'Regions' in chart_title:
+                        field_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
+                preserve_order = False
+            # ----------------------------------------------
+
+            if field_data:
+                # Use the same chart creation function as the original file[cite: 13]
                 if CHART_FUNCTION_AVAILABLE:
-                    fig = create_chart(pd.Series(field_data), chart_type, chart_title, preserve_order=False)
+                    fig = create_chart(field_data, chart_type, chart_title, preserve_order=preserve_order)
                 else:
-                    # Fallback to basic chart creation
+                    # Fallback to basic chart creation[cite: 13]
                     if chart_type == 'pie':
                         df = pd.DataFrame(list(field_data.items()), columns=['Category', 'Count'])
                         fig = px.pie(
@@ -257,12 +291,16 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
                             x='Category', 
                             y='Count',
                             title=chart_title,
-                            color='Count',  # 恢复颜色渐变
-                            color_continuous_scale='Blues'  # 使用蓝色渐变
+                            color='Count',  
+                            color_continuous_scale='Blues'  
                         )
+                    else:
+                        fig = None # 避免未定义错误
                 
-                fig.update_layout(height=500)
-                st.plotly_chart(fig, use_container_width=True)
+                if fig:
+                    fig.update_layout(height=500)
+                    # 使用新的 width='stretch' 规范[cite: 13]
+                    st.plotly_chart(fig, width='stretch')
     else:
         st.info("No frequency analysis data available for Technical Assistance")
     

@@ -263,22 +263,18 @@ class StreamlitStyleManager:
                                         font_size: int = 12, row_gap: float = 0.06, draw_box: bool = False) -> None:
         """
         在图右侧添加自定义纵向图例：
-        - 固定文本宽度（按字符数近似），超过部分自动换行
-        - 每个图例项独占一行，高度自适应
-        - 使用注释表示文本，使用 shape 绘制彩色方块，避免重叠
+        - 固定文本宽度，超过部分自动换行
+        - 彻底抛弃几何 shape，使用文本字符(■)渲染色块，保证 100% 垂直对齐，永不变形拉伸
         """
-        # 预先计算行数以便估算盒子高度
         wrapped_labels = [self._wrap_legend_text(lbl, max_chars=max_chars) for lbl in labels]
         total_lines = sum(wl.count('<br>') + 1 for wl in wrapped_labels)
 
-        # 起始位置（paper坐标, 保持在画布内）
         y_cursor = y
         x_text = x
-        symbol_x = x_text - 0.03  # 彩色方块靠左
-        symbol_w = 0.015
-        symbol_h = 0.02
+        symbol_x = x_text - 0.025  # 色块放在文字左侧
+        
         for idx, wrapped in enumerate(wrapped_labels):
-            # 文本注释
+            # 1. 文本注释
             fig.add_annotation(
                 xref='paper', yref='paper',
                 x=x_text, y=y_cursor,
@@ -286,26 +282,30 @@ class StreamlitStyleManager:
                 showarrow=False,
                 align='left',
                 xanchor='left',
-                yanchor='middle',
+                yanchor='top',
                 font=dict(size=font_size, color='#333'),
             )
-            # 彩色方块（改为shape矩形，更好对齐）
-            fig.add_shape(
-                type='rect',
+            
+            # 2. 色块注释 (🌟核心修复：直接使用 ■ 字符作为注释)
+            # 因为它也是文字，和旁边的文字共享同一个坐标点(y_cursor)和锚点(top)
+            # 渲染引擎会把它们放在同一条基准线上，精准对齐第一行！
+            fig.add_annotation(
                 xref='paper', yref='paper',
-                x0=symbol_x, x1=symbol_x + symbol_w,
-                y0=y_cursor - symbol_h/2, y1=y_cursor + symbol_h/2,
-                line=dict(width=0),
-                fillcolor=colors[idx % len(colors)],
-                layer='above'
+                x=symbol_x, y=y_cursor,
+                text='■',
+                showarrow=False,
+                align='left',
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=font_size + 2, color=colors[idx % len(colors)]), # 稍微调大一点点字体，让方块更饱满
             )
-            # 根据行数下移游标
+            
+            # 3. 游标下移
             lines = wrapped.count('<br>') + 1
-            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.6)
+            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.75)
 
         if draw_box:
-            # 绘制一个包含所有图例的矩形框（保持在画布范围内）
-            height_est = total_lines * row_gap + 0.04
+            height_est = total_lines * row_gap * 0.85 + 0.04
             fig.add_shape(
                 type="rect",
                 xref="paper", yref="paper",
@@ -469,7 +469,105 @@ class StreamlitStyleManager:
         ))
         
         return fig
-
+    
+    def create_smart_chart(self, data, chart_type: str, title: str, preserve_order: bool = False) -> go.Figure:
+        """
+        智能通用图表函数：
+        - 如果 data 是 1D (单一年份)，按 chart_type 画正常图表
+        - 如果 data 是 2D (嵌套字典，代表 All 年份)，自动画 100% 堆叠图 或 多折线图
+        """
+        import pandas as pd
+        import plotly.graph_objects as go
+        
+        if isinstance(data, pd.Series):
+            data_dict = data.dropna().to_dict()
+        elif isinstance(data, dict):
+            data_dict = data
+        else:
+            data_dict = {}
+            
+        is_2d = False
+        if data_dict:
+            first_val = next(iter(data_dict.values()))
+            if isinstance(first_val, dict):
+                is_2d = True
+                
+        if not is_2d:
+            return self.create_standardized_chart(data_dict, chart_type, title, preserve_order)
+            
+        # ---------------- ALL 年份：自动生成通用 2D 图表 ----------------
+        df = pd.DataFrame(data_dict).T.fillna(0)
+        df.index.name = 'Year'
+        df.sort_index(inplace=True)
+        
+        # 强制保留列的顺序 (应对例如 Q11 合作模式的自定义排序需求)
+        if preserve_order and data_dict:
+            ordered_cols = []
+            for y in data_dict:
+                for col in data_dict[y]:
+                    if col not in ordered_cols:
+                        ordered_cols.append(col)
+            # 把不在排序列表中的其它列附加在后面
+            for col in df.columns:
+                if col not in ordered_cols:
+                    ordered_cols.append(col)
+            df = df[[col for col in ordered_cols if col in df.columns]]
+        
+        fig = go.Figure()
+        colors = self.get_chart_colors()
+        
+        layout_config = self.get_global_chart_config('layout').copy()
+        title_config = layout_config.get('title', {}).copy()
+        title_config['text'] = self._wrap_title(title)
+        layout_config['title'] = title_config
+        layout_config['margin'] = dict(t=80, b=80, l=40, r=40)
+        
+        # 🌟 分支 1：画多折线图 (Multi-Line Chart)
+        if chart_type == 'line':
+            for i, option in enumerate(df.columns):
+                display_name = self._to_title_case(str(option))
+                fig.add_trace(go.Scatter(
+                    name=display_name,
+                    x=df.index,
+                    y=df[option],
+                    mode='lines+markers',     # 点+线
+                    marker=dict(size=8),      # 圆点大小
+                    line=dict(width=3),       # 线条粗细
+                    marker_color=colors[i % len(colors)],
+                    hovertemplate='<b>Year: %{x}</b><br>' + display_name + '<br>Count: %{y}<extra></extra>'
+                ))
+            
+            fig.update_layout(
+                **layout_config,
+                yaxis=dict(title="Count (Absolute Value)"),
+                xaxis=dict(type='category', title=""),
+                legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5)
+            )
+            
+        # 🌟 分支 2：画 100% 堆叠柱状图 (Stacked Bar Chart)
+        else:
+            for i, option in enumerate(df.columns):
+                display_name = self._to_title_case(str(option))
+                fig.add_trace(go.Bar(
+                    name=display_name,
+                    x=df.index,
+                    y=df[option],
+                    marker_color=colors[i % len(colors)],
+                    text=df[option],
+                    textposition='inside',
+                    hovertemplate='<b>Year: %{x}</b><br>' + display_name + '<br>Count: %{text}<extra></extra>'
+                ))
+            
+            fig.update_layout(
+                **layout_config,
+                barmode='stack',
+                barnorm='percent',
+                yaxis=dict(title="Percentage (%)", ticksuffix="%", range=[0, 100]),
+                xaxis=dict(type='category', title=""),
+                legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5)
+            )
+            
+        return fig
 # 全局样式管理器实例（供其他模块导入）
 style_manager = StreamlitStyleManager()
 
@@ -498,10 +596,11 @@ def create_metrics(metrics: List[Dict[str, Any]]) -> List[str]:
     return cards
 
 # 兼容的统一图表创建入口（供其他模块导入）
+# 修改 st_styles.py 底部原本的 create_chart 函数
 def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go.Figure:
     preserve_order = kwargs.get('preserve_order', False)
-    return style_manager.create_standardized_chart(data, chart_type, title, preserve_order=preserve_order)
-
+    # 引导流量走新的智能图表函数
+    return style_manager.create_smart_chart(data, chart_type, title, preserve_order=preserve_order)
 
     # 自定义：固定宽度纵向图例（使用注释模拟）
     def _wrap_legend_text(self, text: str, max_chars: int) -> str:
@@ -541,6 +640,8 @@ def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go
                 text=wrapped,
                 showarrow=False,
                 align='left',
+                xanchor='left',
+                yanchor='top',
                 font=dict(size=font_size, color='#333'),
             )
             # 彩色方块（用文本块模拟 ■）
@@ -549,8 +650,9 @@ def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go
                 x=symbol_x, y=y_cursor,
                 text='■',
                 showarrow=False,
+                yanchor='top',
                 font=dict(size=font_size+4, color=colors[idx % len(colors)])
             )
             # 根据行数下移游标
             lines = wrapped.count('<br>') + 1
-            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.6)
+            y_cursor -= row_gap + (lines - 1) * (row_gap * 0.8)

@@ -580,135 +580,214 @@ class Q6Q7Q10Q11DataProcessor:
         except Exception as e:
             st.error(f"Get field distribution error for {question} - {field_name}: {e}")
             return {}
-
-def create_theme_count_chart(works_count_data, current_theme=None):
-    """Create count chart with transparency effect for non-current themes"""
-    if not works_count_data:
-        return None
-    
-    question_labels = {
-        'Q6': 'Knowledge development & dissemination',
-        'Q7': 'Technical assistance', 
-        'Q10': 'Capacity building',
-        'Q11': 'Advocacy & partnerships'
-    }
-    
-    # Filter Q6, Q7, Q10, Q11 data (consistent with Dash version)
-    all_questions = ['Q6', 'Q7', 'Q10', 'Q11']
-    
-    # Prepare data - ensure all questions have data, fill with 0 if missing
-    questions = all_questions
-    question_display_labels = [question_labels.get(q, q) for q in questions]
-    unique_users = []
-    total_works = []
-    
-    for q in questions:
-        if q in works_count_data:
-            unique_users.append(works_count_data[q]['unique_users'])
-            total_works.append(works_count_data[q]['valid_works'])
-        else:
-            unique_users.append(0)
-            total_works.append(0)
-    
-    # Create chart with transparency effect
-    colors = STANDARD_COLORS[:2] if not STYLES_AVAILABLE else style_manager.get_chart_colors()[:2]
-    
-    # Apply transparency to non-current themes
-    user_colors = []
-    work_colors = []
-    
-    for i, q in enumerate(questions):
-        if current_theme and q != current_theme:
-            # Make non-current themes semi-transparent
-            user_colors.append(f"rgba({int(colors[0][1:3], 16)}, {int(colors[0][3:5], 16)}, {int(colors[0][5:7], 16)}, 0.3)")
-            work_colors.append(f"rgba({int(colors[1][1:3], 16)}, {int(colors[1][3:5], 16)}, {int(colors[1][5:7], 16)}, 0.3)")
-        else:
-            # Keep current theme fully opaque
-            user_colors.append(colors[0])
-            work_colors.append(colors[1])
-    
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name='Number of staff reporting',
-        x=question_display_labels,
-        y=unique_users,
-        marker_color=user_colors,
-        hovertemplate='<b>%{x}</b><br>Number of staff reporting: %{y}<extra></extra>',
-        hoverlabel=dict(bgcolor='rgba(255,255,255,0.9)', bordercolor='rgba(0,0,0,0.2)', font_color='black')
-    ))
-    fig.add_trace(go.Bar(
-        name='Number of outputs delivered',
-        x=question_display_labels,
-        y=total_works,
-        marker_color=work_colors,
-        hovertemplate='<b>%{x}</b><br>Number of outputs delivered: %{y}<extra></extra>',
-        hoverlabel=dict(bgcolor='rgba(255,255,255,0.9)', bordercolor='rgba(0,0,0,0.2)', font_color='black')
-    ))
-    
-    # Create line-wrapped labels
-    wrapped_labels = []
-    for label in question_display_labels:
-        # Split long labels into two lines
-        if len(label) > 15:
-            words = label.split(' ')
-            mid = len(words) // 2
-            line1 = ' '.join(words[:mid])
-            line2 = ' '.join(words[mid:])
-            wrapped_labels.append(f"{line1}<br>{line2}")
-        else:
-            wrapped_labels.append(label)
-    
-    # Apply style configuration
-    if STYLES_AVAILABLE:
-        layout_config = style_manager.get_global_chart_config('layout').copy()
-        # Override margin to ensure enough space for wrapped labels
-        layout_config['margin'] = dict(l=40, r=40, t=60, b=120)
-        fig.update_layout(
-            xaxis_title='',  # Hide x-axis title
-            yaxis_title='',  # Hide y-axis title
-            barmode='group',
-            height=500,
-            xaxis=dict(
-                tickangle=0,
-                tickmode='array',
-                tickvals=list(range(len(question_display_labels))),
-                ticktext=wrapped_labels,
-                tickfont=dict(size=10),
-                side='bottom'
-            ),
-            **layout_config
-        )
-        # Set chart title under unified style
-        fig.update_layout(
-            title='Number of Outputs Delivered by Cluster',
-            title_font_size=20,
-            title_x=0.5,
-            title_xanchor='center'
-        )
-    else:
-        fig.update_layout(
-            title='Number of Outputs Delivered by Cluster',
-            title_font_size=20,
-            title_x=0.5,
-            title_xanchor='center',
-            xaxis_title='',  # Hide x-axis title
-            yaxis_title='',  # Hide y-axis title
-            barmode='group',
-            height=500,
-            margin=dict(b=120),
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            font_family="Noto Sans",
-            xaxis=dict(
-                tickangle=0,
-                tickmode='array',
-                tickvals=list(range(len(question_display_labels))),
-                ticktext=wrapped_labels,
-                tickfont=dict(size=10),
-                side='bottom'
+    def get_time_series_distribution(self, question: str, field_name: str) -> Dict[str, Dict[str, int]]:
+        """获取带有年份维度的 2D 分布数据（用于All视图的堆叠图）"""
+        try:
+            if self.combined_data is None or self.combined_data.empty: return {}
+            question_data = self.combined_data[self.combined_data['Question'] == question]
+            if question_data.empty or field_name not in question_data.columns: return {}
+            
+            # 提取年份列
+            year_col = 'YEAR' if 'YEAR' in question_data.columns else 'year' if 'year' in question_data.columns else None
+            if not year_col: return {}
+            
+            field_data = question_data[[field_name, year_col]].copy()
+            field_data = field_data.dropna()
+            field_data = field_data[field_data[field_name].astype(str).str.strip() != '']
+            field_data = field_data[field_data[field_name].astype(str).str.strip() != 'nan']
+            
+            # 标准化名称（复用现有的映射字典）
+            field_data[field_name] = field_data[field_name].astype(str).str.strip()
+            field_data[field_name] = field_data[field_name].str.replace(r'\s+', ' ', regex=True)
+            
+            standardization_map = {
+                'extrabudgetary': 'Extrabudgetary', 'extra budgetary': 'Extrabudgetary', 
+                'extra-budgetary': 'Extrabudgetary', 'EXTRABUDGETARY': 'Extrabudgetary',
+                'regular budget': 'Regular Budget', 'regularbudget': 'Regular Budget',
+                'REGULAR BUDGET': 'Regular Budget', 'technical report': 'Technical Report',
+                'Technical report': 'Technical Report', 'TECHNICAL REPORT': 'Technical Report',
+                'working paper': 'Working Paper', 'Working paper': 'Working Paper',
+                'WORKING PAPER': 'Working Paper', 'guidance/tools': 'Guidance/Tools',
+                'Guidance/tools': 'Guidance/Tools', 'GUIDANCE/TOOLS': 'Guidance/Tools',
+                'evaluation': 'Evaluation', 'EVALUATION': 'Evaluation',
+                'data/database': 'Data/Database', 'Data/database': 'Data/Database',
+                'DATA/DATABASE': 'Data/Database', 'best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'Best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'BEST PRACTICES/LESSONS LEARNED': 'Best Practices/Lessons Learned',
+                'youth only': 'Youth Only', 'YOUTH ONLY': 'Youth Only',
+                'youth is one of the target groups': 'Youth Is One Of The Target Groups',
+                'YOUTH IS ONE OF THE TARGET GROUPS': 'Youth Is One Of The Target Groups',
+                'global': 'Global', 'GLOBAL': 'Global', 'regional': 'Regional',
+                'REGIONAL': 'Regional', 'national/local': 'National/Local',
+                'NATIONAL/LOCAL': 'National/Local', 'yes': 'Yes', 'YES': 'Yes',
+                'no': 'No', 'NO': 'No', 'in person': 'In Person', 'IN PERSON': 'In Person',
+                'online': 'Online', 'ONLINE': 'Online', 'both': 'Both', 'BOTH': 'Both'
+            }
+            
+            for old_value, new_value in standardization_map.items():
+                field_data[field_name] = field_data[field_name].str.replace(old_value, new_value, case=False, regex=False)
+            
+            # 清理年份格式 (将 2024.0 变为 2024)
+            field_data[year_col] = field_data[year_col].astype(str).apply(
+                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
             )
-        )
+            field_data = field_data[field_data[year_col] != 'nan']
+            
+            # 交叉生成 2D 字典
+            crosstab = pd.crosstab(field_data[year_col], field_data[field_name])
+            return crosstab.to_dict(orient='index')
+        except Exception as e:
+            return {}
+    def get_all_years_theme_counts(self) -> pd.DataFrame:
+        """提取所有年份的 Cluster 对比数据"""
+        try:
+            if self.combined_data is None or self.combined_data.empty:
+                return pd.DataFrame()
+            
+            # 获取年份列名
+            year_col = 'YEAR' if 'YEAR' in self.combined_data.columns else 'year'
+            
+            # 按年份和问题类型分组统计
+            # 1. 统计每个年份、每个问题的 Unique Users
+            users_stat = self.combined_data.groupby([year_col, 'Question'])['UserId'].nunique().reset_index()
+            users_stat.rename(columns={'UserId': 'Number of staff reporting'}, inplace=True)
+            
+            # 2. 统计每个年份、每个问题的有效作品数 (Valid Works)
+            # 这里简化逻辑，直接统计行数，如需更精确可复用 _recalculate_works_count_stats 的过滤逻辑
+            works_stat = self.combined_data.groupby([year_col, 'Question']).size().reset_index()
+            works_stat.rename(columns={0: 'Number of outputs delivered'}, inplace=True)
+            
+            # 合并统计结果
+            df_merged = pd.merge(users_stat, works_stat, on=[year_col, 'Question'])
+            
+            # 映射问题标签
+            question_labels = {
+                'Q6': 'Knowledge development & dissemination',
+                'Q7': 'Technical assistance', 
+                'Q10': 'Capacity building',
+                'Q11': 'Advocacy & partnerships'
+            }
+            df_merged['Cluster'] = df_merged['Question'].map(question_labels)
+            
+            # 清理年份格式
+            df_merged[year_col] = df_merged[year_col].astype(str).apply(
+                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
+            )
+            
+            return df_merged
+        except Exception as e:
+            st.error(f"Error extracting multi-year counts: {e}")
+            return pd.DataFrame()
+
+def create_theme_count_chart(data_processor, current_theme=None):
+    """
+    升级版：支持单一年份和跨年份(All)的 Cluster 对比图
+    """
+    import plotly.graph_objects as go
+    selected_year = st.session_state.get('selected_year', 'All')
     
+    # 统一获取配色[cite: 11]
+    colors = style_manager.get_chart_colors() if STYLES_AVAILABLE else STANDARD_COLORS
+    
+    # --- 情况 A：单一年份 (维持原状，但增加透明度高亮当前主题) ---
+    if selected_year != 'All':
+        # 获取单年统计数据
+        works_count_data = data_processor.get_works_count_data()
+        if not works_count_data:
+            return None
+
+        question_labels = {
+            'Q6': 'Knowledge development & dissemination',
+            'Q7': 'Technical assistance', 
+            'Q10': 'Capacity building',
+            'Q11': 'Advocacy & partnerships'
+        }
+        all_questions = ['Q6', 'Q7', 'Q10', 'Q11']
+        
+        question_display_labels = [question_labels.get(q, q) for q in all_questions]
+        unique_users = []
+        total_works = []
+        user_colors = []
+        work_colors = []
+
+        for q in all_questions:
+            val = works_count_data.get(q, {'unique_users': 0, 'valid_works': 0})
+            unique_users.append(val['unique_users'])
+            total_works.append(val['valid_works'])
+            
+            # 透明度处理：如果是在专项页面，高亮显示该页面的柱子[cite: 16]
+            if current_theme and q != current_theme:
+                # 转换为 rgba 格式实现透明感[cite: 16]
+                c1, c2 = colors[0], colors[1]
+                user_colors.append(f"rgba({int(c1[1:3],16)}, {int(c1[3:5],16)}, {int(c1[5:7],16)}, 0.3)")
+                work_colors.append(f"rgba({int(c2[1:3],16)}, {int(c2[3:5],16)}, {int(c2[5:7],16)}, 0.3)")
+            else:
+                user_colors.append(colors[0])
+                work_colors.append(colors[1])
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name='Number of staff reporting', x=question_display_labels, y=unique_users, marker_color=user_colors))
+        fig.add_trace(go.Bar(name='Number of outputs delivered', x=question_display_labels, y=total_works, marker_color=work_colors))
+        
+        chart_title = 'Number of Outputs Delivered by Cluster'
+
+    # --- 情况 B：选择 ALL (跨年份对比大 Boss) ---
+    else:
+        # 使用我们在 DataProcessor 中新增的方法获取多年数据
+        df = data_processor.get_all_years_theme_counts()
+        if df.empty:
+            return None
+            
+        year_col = 'YEAR' if 'YEAR' in df.columns else 'year'
+        fig = go.Figure()
+        
+        clusters = [
+            'Knowledge development & dissemination',
+            'Technical assistance', 
+            'Capacity building',
+            'Advocacy & partnerships'
+        ]
+        
+        for i, cluster in enumerate(clusters):
+            cluster_df = df[df['Cluster'] == cluster].sort_values(year_col)
+            
+            # 使用同色系：Staff 用浅色 (透明度0.4)，Outputs 用深色 (不透明)
+            # 这样一组(一类颜色)就代表一个 Cluster 随年份的变化趋势
+            fig.add_trace(go.Bar(
+                name=f"{cluster} (Staff)",
+                x=cluster_df[year_col],
+                y=cluster_df['Number of staff reporting'],
+                marker_color=colors[i % len(colors)],
+                opacity=0.4,
+                hovertemplate='Year: %{x}<br>Staff: %{y}<extra></extra>'
+            ))
+            fig.add_trace(go.Bar(
+                name=f"{cluster} (Outputs)",
+                x=cluster_df[year_col],
+                y=cluster_df['Number of outputs delivered'],
+                marker_color=colors[i % len(colors)],
+                hovertemplate='Year: %{x}<br>Outputs: %{y}<extra></extra>'
+            ))
+            
+        chart_title = 'Annual Progress Comparison by Cluster (2024-2030)'
+
+    # --- 通用布局设置 (统一应用你的全局样式) ---
+    layout_config = style_manager.get_global_chart_config('layout').copy() if STYLES_AVAILABLE else {}
+    
+    # 特别处理换行和间距
+    fig.update_layout(
+        title={'text': chart_title, 'x': 0.5, 'xanchor': 'center'},
+        barmode='group',
+        height=600,
+        xaxis={'type': 'category', 'title': 'Reporting Period'},
+        yaxis={'title': 'Count'},
+        legend={'orientation': "h", 'yanchor': 'top', 'y': -0.2, 'xanchor': 'center', 'x': 0.5},
+        margin={'t': 80, 'b': 150, 'l': 50, 'r': 50}
+    )
+    
+    if STYLES_AVAILABLE:
+        fig.update_layout(font=layout_config.get('font', {}))
+        
     return fig
 
 def create_theme_detail_list(data_processor, question):
@@ -1211,9 +1290,9 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
     if selected_section == "Outputs Count Statistics":
         # Section 1: Outputs Count Statistics only
         if works_count_data:
-            count_fig = create_theme_count_chart(works_count_data, current_theme=None)
+            count_fig = create_theme_count_chart(data_processor, current_theme=None)
             if count_fig:
-                st.plotly_chart(count_fig, use_container_width=True)
+                st.plotly_chart(count_fig, width='stretch')
         # Note: Removed redundant warning messages as they are handled at the top level
     
     else:
@@ -1243,9 +1322,9 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
                     "Advocacy & Partnerships": "Q11"
                 }
                 current_theme = theme_mapping[selected_section]
-                count_fig = create_theme_count_chart(works_count_data, current_theme=current_theme)
+                count_fig = create_theme_count_chart(data_processor, current_theme=current_theme)
                 if count_fig:
-                    st.plotly_chart(count_fig, use_container_width=True)
+                    st.plotly_chart(count_fig, width='stretch')
             # Note: Removed redundant warning messages as they are handled at the top level
             
             st.markdown("---")  # Add separator
@@ -1262,43 +1341,74 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
                 break
         
         if has_frequency_data:
+            selected_year = st.session_state.get('selected_year', 'All')
+            
+            # 定义哪些特定的图表在选 All 时需要变成折线图
+            line_chart_targets = [
+                'Types Of Knowledge Development And Dissemination Outputs Delivered',
+                'Types Of Advocacy Or Partnership Outputs',
+                'Types Of Advocacy & Partnerships Delivered'
+            ]
+            
             for field_name, chart_type, chart_title in theme_info['charts']:
-                field_data = data_processor.get_field_distribution(question, field_name)
-                if field_data:
-                    # Special handling for Q7 and Q11 region data (top 10)
-                    if 'Region' in chart_title or 'Regions' in chart_title:
-                        sorted_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
-                        field_data = sorted_data
+                
+                # ---------------- 智能拦截逻辑 ----------------
+                if selected_year == 'All' and chart_type == 'pie':
+                    # 1. 饼图 -> 100% 堆叠柱状图
+                    field_data = data_processor.get_time_series_distribution(question, field_name)
+                    preserve_order = False
                     
-                    # Special handling for Q11 partnership types with custom order
+                elif selected_year == 'All' and chart_title in line_chart_targets:
+                    # 2. 特定的柱状图 -> 多折线图
+                    field_data = data_processor.get_time_series_distribution(question, field_name)
+                    chart_type = 'line'  # 通知底层画折线
+                    
+                    # 针对 Q11 合作模式的自定义排序处理（二维字典版）
                     if question == 'Q11' and 'Type of partnership' in field_name:
                         custom_order = [
-                            'multistakeholder initiative',
-                            'bilateral partnership',
-                            'UN interagency initiative',
-                            'campaign',
-                            'event',
-                            'challenge'
+                            'multistakeholder initiative', 'bilateral partnership',
+                            'UN interagency initiative', 'campaign', 'event', 'challenge'
                         ]
-                        
                         ordered_data = {}
-                        for item in custom_order:
-                            if item in field_data:
-                                ordered_data[item] = field_data[item]
-                        
-                        for key, value in field_data.items():
-                            if key not in ordered_data:
-                                ordered_data[key] = value
-                        
+                        for y, cats in field_data.items():
+                            ordered_cats = {}
+                            for item in custom_order:
+                                if item in cats: ordered_cats[item] = cats[item]
+                            for k, v in cats.items():
+                                if k not in ordered_cats: ordered_cats[k] = v
+                            ordered_data[y] = ordered_cats
                         field_data = ordered_data
                         preserve_order = True
                     else:
                         preserve_order = False
+
+                else:
+                    # 3. 普通的 1D 数据处理（单一年份图表 或 维持原状的其它柱图）
+                    field_data = data_processor.get_field_distribution(question, field_name)
                     
-                    fig = create_chart(pd.Series(field_data), chart_type, chart_title, preserve_order=preserve_order)
-                    st.plotly_chart(fig, use_container_width=True)
-        # Note: Removed individual chart warning messages as they are handled at the top level
-        
+                    if field_data:
+                        if 'Region' in chart_title or 'Regions' in chart_title:
+                            field_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
+                        
+                        if question == 'Q11' and 'Type of partnership' in field_name:
+                            custom_order = [
+                                'multistakeholder initiative', 'bilateral partnership',
+                                'UN interagency initiative', 'campaign', 'event', 'challenge'
+                            ]
+                            ordered_data = {}
+                            for item in custom_order:
+                                if item in field_data: ordered_data[item] = field_data[item]
+                            for key, value in field_data.items():
+                                if key not in ordered_data: ordered_data[key] = value
+                            field_data = ordered_data
+                            preserve_order = True
+                        else:
+                            preserve_order = False
+                # ----------------------------------------------
+                
+                if field_data:
+                    fig = create_chart(field_data, chart_type, chart_title, preserve_order=preserve_order)
+                    st.plotly_chart(fig, width='stretch')
         # Section 3: Outputs Detail List
         st.subheader("📋 Outputs Detail List")
         

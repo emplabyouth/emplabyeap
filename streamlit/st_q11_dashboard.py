@@ -379,7 +379,7 @@ def create_layout():
             has_frequency_data = True
             
             fig = create_chart(pd.Series(field_data), chart_type, chart_title)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
     
     if not has_frequency_data:
         st.info("No frequency analysis data available with current filters.")

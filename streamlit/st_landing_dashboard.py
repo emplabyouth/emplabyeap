@@ -41,30 +41,43 @@ def get_q2_data():
         
         if os.path.exists(csv_path):
             df = safe_read_csv(csv_path)
+            selected_year = st.session_state.get('selected_year', 'All')
             
-            # Apply global YEAR filter if available
-            try:
-                selected_year = st.session_state.get('selected_year', 'All')
-                if selected_year != 'All':
-                    # Check for both 'YEAR' and 'year' columns
-                    if 'YEAR' in df.columns:
-                        df = df[df['YEAR'].astype(str).str.strip() == str(selected_year)]
-                    elif 'year' in df.columns:
-                        df = df[df['year'].astype(str).str.strip() == str(selected_year)]
-            except Exception:
-                pass
+            # 找出年份列
+            year_col = 'YEAR' if 'YEAR' in df.columns else 'year' if 'year' in df.columns else None
             
-            # Filter Q2 data
+            # 筛选出 Q2 的数据
             q2_data = df[df['question'].str.contains('Q2:', na=False)]
             
-            # Create data dictionary for chart
-            data_dict = {}
-            for _, row in q2_data.iterrows():
-                option = str(row['option']).strip()
-                count = int(row['count']) if pd.notna(row['count']) else 0
-                data_dict[option] = count
-            
-            return data_dict
+            # ---------------- 关键修改：如果选了 'All'，保留年份维度 ----------------
+            if selected_year == 'All' and year_col:
+                data_dict = {}
+                for _, row in q2_data.iterrows():
+                    y = str(row[year_col]).strip()
+                    if y.endswith('.0'): y = y[:-2]
+                    if not y or y == 'nan': continue
+                    
+                    option = str(row['option']).strip()
+                    count = int(row['count']) if pd.notna(row['count']) else 0
+                    
+                    if y not in data_dict:
+                        data_dict[y] = {}
+                    data_dict[y][option] = data_dict[y].get(option, 0) + count
+                # 返回 2D 字典 (例如: {'2024': {'Yes': 10}, '2025': {'Yes': 15}})
+                return data_dict
+                
+            # ---------------- 如果选了特定年份，走原来的逻辑 ----------------
+            else:
+                if selected_year != 'All' and year_col:
+                    q2_data = q2_data[q2_data[year_col].astype(str).str.strip() == str(selected_year)]
+                
+                data_dict = {}
+                for _, row in q2_data.iterrows():
+                    option = str(row['option']).strip()
+                    count = int(row['count']) if pd.notna(row['count']) else 0
+                    data_dict[option] = data_dict.get(option, 0) + count
+                # 返回 1D 字典 (例如: {'Yes': 10, 'No': 5})
+                return data_dict
         else:
             return {}
     except Exception as e:
@@ -73,66 +86,94 @@ def get_q2_data():
 
 
 def create_q2_chart(data):
-    """Create Q2 pie chart with specified title"""
+    """Create Q2 chart: Pie for single year, 100% Stacked Bar for All years"""
     if not data:
         return None
-    
+        
     title = "Distribution of Responses on Whether Entities Conducted Youth Employment Work in the Reference Period"
+    import plotly.graph_objects as go
     
-    if STYLES_AVAILABLE:
-        try:
-            return create_chart(data, 'pie', title)
-        except Exception:
-            pass
-    
-    # Fallback chart creation
-    fig = go.Figure()
-    
-    categories = list(data.keys())
-    values = list(data.values())
-    colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6']
-    
-    fig.add_trace(go.Pie(
-        labels=categories,
-        values=values,
-        marker_colors=colors[:len(categories)],
-        hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title={
-            'text': title,
-            'font': {'size': 14},
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top',
-            'pad': {'b': 10}
-        },
-        height=400,
-        paper_bgcolor='white',
-        plot_bgcolor='white',
-        font_family="Noto Sans",
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=1,
-            xanchor="left",
-            x=1.02,
-            bgcolor="rgba(255,255,255,0.9)",
-            bordercolor="rgba(0,0,0,0.2)",
-            borderwidth=1,
-            font=dict(size=12),
-            itemwidth=30,
-            tracegroupgap=5,
-            itemsizing="constant",
-            entrywidth=120,
-            entrywidthmode="pixels"
-        ),
-        margin=dict(t=60, b=20, l=20, r=260),
-        autosize=True
-    )
-    
-    return fig
+    # 自动判断传进来的数据是 1D (单一年份) 还是 2D (All年份)
+    is_2d = False
+    if data:
+        first_val = next(iter(data.values()))
+        if isinstance(first_val, dict):
+            is_2d = True
+
+    # ---------------- 如果是单一年份，画饼图 ----------------
+    if not is_2d:
+        if STYLES_AVAILABLE:
+            try:
+                from st_styles import create_chart
+                return create_chart(data, 'pie', title)
+            except Exception:
+                pass
+                
+        # 备用饼图代码
+        fig = go.Figure()
+        categories = list(data.keys())
+        values = list(data.values())
+        colors = ['#1E2DBE', '#FA3C4B', '#05D2D2', '#FFCD2D', '#960A55']
+        
+        fig.add_trace(go.Pie(
+            labels=categories,
+            values=values,
+            marker_colors=colors[:len(categories)],
+            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title={'text': title, 'font': {'size': 14}, 'x': 0.5, 'xanchor': 'center'},
+            height=400,
+            paper_bgcolor='white', plot_bgcolor='white',
+            font_family="Noto Sans",
+            margin=dict(t=60, b=20, l=20, r=260)
+        )
+        return fig
+
+    # ---------------- 核心：如果是 All，画 100% 堆叠柱状图 ----------------
+    else:
+        import pandas as pd
+        
+        # 把带有年份的 2D 数据转成表格
+        df = pd.DataFrame(data).T.fillna(0)
+        df.index.name = 'Year'
+        df = df.sort_index()
+        
+        fig = go.Figure()
+        colors = ['#1E2DBE', '#FA3C4B', '#05D2D2', '#FFCD2D', '#960A55']
+        
+        for i, option in enumerate(df.columns):
+            fig.add_trace(go.Bar(
+                name=option,
+                x=df.index,
+                y=df[option],
+                marker_color=colors[i % len(colors)],
+                text=df[option],
+                textposition='inside',
+                hovertemplate='<b>Year: %{x}</b><br>' + option + '<br>Count: %{text}<extra></extra>'
+            ))
+            
+        fig.update_layout(
+            barmode='stack',
+            barnorm='percent',  # Plotly 魔法：这句代码直接把绝对值转为 100% 堆叠比例
+            title={
+                'text': title,
+                'font': {'size': 14},
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            height=450,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            font_family="Noto Sans",
+            yaxis=dict(title="Percentage (%)", ticksuffix="%", range=[0, 100]),
+            xaxis=dict(title="", type='category'),  # category 避免年份变成连续数值
+            legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+            margin=dict(t=80, b=80, l=40, r=40)
+        )
+        return fig
 
 
 def get_q345_data():
@@ -1331,9 +1372,9 @@ References
         
         if works_count_data:
             # Create and display the chart
-            count_fig = create_theme_count_chart(works_count_data, current_theme=None)
+            count_fig = create_theme_count_chart(data_processor, current_theme=None)
             if count_fig:
-                st.plotly_chart(count_fig, use_container_width=True)
+                st.plotly_chart(count_fig, width='stretch')
             else:
                 st.info("Chart could not be generated")
         else:
