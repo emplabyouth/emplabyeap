@@ -1,0 +1,1483 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import os
+import sys
+import base64
+from typing import Dict, Any, List
+
+# Import unified style   module
+try:
+    from st_styles import style_manager, create_chart, apply_page_style, create_metrics, create_table, create_standardized_chart
+    STYLES_AVAILABLE = True
+except ImportError:
+    STYLES_AVAILABLE = False
+    # Define backup colors - Updated with new color scheme
+STANDARD_COLORS = ['#1E2DBE', '#FA3C4B', '#05D2D2', '#FFCD2D', '#960A55', '#8CE164', '#34495E', '#F1C40F', '#E67E22', '#95A5A6']
+
+def safe_read_csv(file_path: str, **kwargs) -> pd.DataFrame:
+    """Safely read CSV file with multiple encoding attempts"""
+    encodings_to_try = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+    
+    for encoding in encodings_to_try:
+        try:
+            return pd.read_csv(file_path, encoding=encoding, **kwargs)
+        except UnicodeDecodeError:
+            continue
+    
+    # If all encodings fail, try without specifying encoding
+    return pd.read_csv(file_path, **kwargs)
+
+def get_base64_image(image_path):
+    """Convert image to base64 string for embedding in HTML"""
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return ""
+
+def create_unified_header():
+    """Create unified header with logo and title for all pages"""
+    # Resolve logo path
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    logo_path = os.path.join(project_root, 'orignaldata', 'logo.png')
+
+    # Determine year-aware title with line break
+    selected_year = st.session_state.get('selected_year', None)
+    year_text = None
+    if selected_year and str(selected_year).lower() != 'all':
+        year_text = str(selected_year)
+    
+    # Split title into two lines
+    main_title = "ILO Youth Employment Action Plan (YEAP):"
+    year_title = f"{year_text} Reporting" if year_text else "2025 Reporting"
+
+    # Create a unified blue background container for both logo and title
+    st.markdown(f"""
+    <div style="
+        background-color: rgb(30, 45, 190);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-height: 80px;
+        width: 100%;
+        box-sizing: border-box;
+    ">
+        <div style="flex: 0 0 auto; max-width: 180px; min-width: 80px; display: flex; align-items: center; justify-content: center;">
+              <img src="data:image/png;base64,{get_base64_image(logo_path)}" 
+                   style="width: 100%; height: auto; display: block; max-height: 60px;">
+          </div>
+        <div style="
+            flex: 1;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+            padding: 10px;
+            overflow: visible;
+        ">
+            <div style="
+                font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                font-size: clamp(0.96rem, 3.2vw, 2.24rem); 
+                font-weight: 700; 
+                margin-bottom: 5px;
+                word-wrap: break-word;
+                hyphens: auto;
+                text-align: center;
+                width: 100%;
+            ">
+                {main_title}
+            </div>
+            <div style="
+                font-family: 'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                font-size: clamp(0.81rem, 2.25vw, 1.62rem); 
+                font-weight: 300;
+                word-wrap: break-word;
+                text-align: center;
+                width: 100%;
+            ">
+                {year_title}
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+class Q6Q7Q10Q11DataProcessor:
+    """Q6Q7Q10Q11 Data Processor - responsible for loading and preprocessing original data"""
+    
+    def __init__(self, base_path: str = None):
+        """Initialize data processor"""
+        self.base_path = base_path or "."
+        self.q6_data = None
+        self.q7_data = None
+        self.q10_data = None
+        self.q11_data = None
+        self.combined_data = None
+        self._load_all_data()
+    
+    def _load_all_data(self):
+        """Load all original data files"""
+        try:
+            # Get absolute path of project root directory
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            
+            # Original data file paths
+            data_files = {
+                'q6': os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ6.csv'),
+                'q7': os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ7.csv'),
+                'q10': os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ10.csv'),
+                'q11': os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ11.csv')
+            }
+            
+            # Load Q6 data
+            self.q6_data = self._load_data_file(data_files['q6'])
+            if not self.q6_data.empty:
+                self.q6_data['Question'] = 'Q6'
+            
+            # Load Q7 data
+            self.q7_data = self._load_data_file(data_files['q7'])
+            if not self.q7_data.empty:
+                self.q7_data['Question'] = 'Q7'
+            
+            # Load Q10 data
+            self.q10_data = self._load_data_file(data_files['q10'])
+            if not self.q10_data.empty:
+                self.q10_data['Question'] = 'Q10'
+            
+            # Load Q11 data
+            self.q11_data = self._load_data_file(data_files['q11'])
+            if not self.q11_data.empty:
+                self.q11_data['Question'] = 'Q11'
+            
+            # Combine all data for unified processing
+            self._combine_data()
+            
+        except Exception as e:
+            st.error(f"Data loading error: {e}")
+            # Create empty DataFrames as backup
+            self._initialize_empty_dataframes()
+    
+    def _combine_data(self):
+        """Combine all question data into a single DataFrame"""
+        dataframes = []
+        
+        for df in [self.q6_data, self.q7_data, self.q10_data, self.q11_data]:
+            if df is not None and not df.empty:
+                # More lenient filtering: keep rows with UserId and year
+                # This ensures we don't lose records that might have partial data
+                basic_filter = (
+                    df['UserId'].notna() & 
+                    (df['UserId'].astype(str).str.strip() != '') &
+                    (df['UserId'].astype(str).str.strip() != 'nan')
+                )
+                
+                # Also keep rows that have year information
+                if 'year' in df.columns:
+                    year_filter = (
+                        df['year'].notna() & 
+                        (df['year'].astype(str).str.strip() != '') &
+                        (df['year'].astype(str).str.strip() != 'nan')
+                    )
+                    basic_filter = basic_filter & year_filter
+                elif 'YEAR' in df.columns:
+                    year_filter = (
+                        df['YEAR'].notna() & 
+                        (df['YEAR'].astype(str).str.strip() != '') &
+                        (df['YEAR'].astype(str).str.strip() != 'nan')
+                    )
+                    basic_filter = basic_filter & year_filter
+                
+                df_filtered = df[basic_filter].copy()
+                if not df_filtered.empty:
+                    dataframes.append(df_filtered)
+        
+        if dataframes:
+            self.combined_data = pd.concat(dataframes, ignore_index=True, sort=False)
+        else:
+            self.combined_data = pd.DataFrame()
+    
+    def _load_data_file(self, file_path: str) -> pd.DataFrame:
+        """Load data file with year filtering"""
+        try:
+            full_path = os.path.join(self.base_path, file_path)
+            if os.path.exists(full_path):
+                df = safe_read_csv(full_path)
+                
+                # Apply global YEAR filter if available
+                try:
+                    selected_year = st.session_state.get('selected_year', 'All')
+                    if selected_year != 'All':
+                        # Check for both 'YEAR' and 'year' columns
+                        if 'YEAR' in df.columns:
+                            df = df[df['YEAR'].astype(str).str.strip() == str(selected_year)]
+                        elif 'year' in df.columns:
+                            df = df[df['year'].astype(str).str.strip() == str(selected_year)]
+                except Exception:
+                    pass
+                
+                return df
+            else:
+                st.warning(f"File not found: {full_path}")
+                return pd.DataFrame()
+        except Exception as e:
+            st.error(f"Error loading file {file_path}: {e}")
+            return pd.DataFrame()
+    
+    def _initialize_empty_dataframes(self):
+        """Initialize empty DataFrames as backup"""
+        self.q6_data = pd.DataFrame()
+        self.q7_data = pd.DataFrame()
+        self.q10_data = pd.DataFrame()
+        self.q11_data = pd.DataFrame()
+        self.combined_data = pd.DataFrame()
+    
+    def _recalculate_works_count_stats(self):
+        """Recalculate works_count statistics from raw data"""
+        try:
+            if self.combined_data is None or self.combined_data.empty:
+                return pd.DataFrame()
+            
+            # Recalculate statistics for each question
+            questions = ['Q6', 'Q7', 'Q10', 'Q11']
+            new_works_count_data = []
+            
+            for question in questions:
+                # Filter data for this question
+                question_data = self.combined_data[self.combined_data['Question'] == question]
+                
+                if not question_data.empty:
+                    # Total works count: all records (including empty rows)
+                    total_works = len(question_data)
+                    
+                    # Filtered works count: valid works (excluding empty rows)
+                    # Check if work name columns have values
+                    work_name_columns = [col for col in question_data.columns if 'name' in col.lower() or 'work' in col.lower()]
+                    if work_name_columns:
+                        # Calculate rows with at least one work name column not null and not empty string
+                        valid_mask = question_data[work_name_columns].notna().any(axis=1)
+                        # Further filter empty strings
+                        for col in work_name_columns:
+                            if col in question_data.columns:
+                                valid_mask = valid_mask & (question_data[col].astype(str).str.strip() != '')
+                        valid_works = valid_mask.sum()
+                    else:
+                        # If no work name columns found, check all non-ID and non-region columns
+                        exclude_cols = ['UserId', 'User ID', 'Region', 'Question']
+                        content_cols = [col for col in question_data.columns if col not in exclude_cols]
+                        if content_cols:
+                            valid_works = question_data[content_cols].notna().any(axis=1).sum()
+                        else:
+                            valid_works = 0
+                    
+                    # Get unique user IDs - count only users with valid content
+                    user_id_col = 'UserId' if 'UserId' in question_data.columns else 'User ID'
+                    if user_id_col in question_data.columns:
+                        # Count only users with valid work content
+                        if work_name_columns:
+                            # Use the same filtering logic as valid_works
+                            valid_mask = question_data[work_name_columns].notna().any(axis=1)
+                            for col in work_name_columns:
+                                if col in question_data.columns:
+                                    valid_mask = valid_mask & (question_data[col].astype(str).str.strip() != '')
+                            users_with_valid_works = question_data[valid_mask][user_id_col].nunique()
+                        else:
+                            # If no work name columns found, check all content columns
+                            exclude_cols = ['UserId', 'User ID', 'Region', 'Question']
+                            content_cols = [col for col in question_data.columns if col not in exclude_cols]
+                            if content_cols:
+                                valid_mask = question_data[content_cols].notna().any(axis=1)
+                                users_with_valid_works = question_data[valid_mask][user_id_col].nunique()
+                            else:
+                                users_with_valid_works = 0
+                    else:
+                        users_with_valid_works = 0
+                    
+                    new_works_count_data.append({
+                        'Question': question,
+                        'Total_Works': total_works,  # Total works count
+                        'Valid_Works': valid_works,  # Filtered works count
+                        'Unique_Users': users_with_valid_works,  # Number of users with valid content
+                        'Total_Outputs': total_works,  # Maintain compatibility
+                        'Valid_Outputs': valid_works   # Maintain compatibility
+                    })
+            
+            return pd.DataFrame(new_works_count_data)
+                
+        except Exception as e:
+            st.warning(f"Error recalculating works count stats: {str(e)}")
+            return pd.DataFrame()
+    
+    def _load_analysis_results(self):
+        """Load pre-computed analysis results (deprecated, kept for compatibility)"""
+        # This method is no longer used as we now calculate directly from original data
+        pass
+
+    def get_summary_stats(self) -> Dict[str, Dict[str, Any]]:
+        """Get summary statistics for all questions"""
+        try:
+            # Recalculate from raw data
+            works_count_stats = self._recalculate_works_count_stats()
+            
+            if works_count_stats.empty:
+                return {}
+            
+            summary = {}
+            for _, row in works_count_stats.iterrows():
+                question = row['Question']
+                summary[question] = {
+                    'total_works': int(row['Total_Works']),  # Total works count
+                    'valid_works': int(row['Valid_Works']),  # Filtered works count
+                    'unique_users': int(row['Unique_Users']),  # Unique user count
+                    'avg_works_per_user': round(row['Valid_Works'] / row['Unique_Users'], 2) if row['Unique_Users'] > 0 else 0,
+                    # Maintain compatibility
+                    'total_outputs': int(row['Total_Works']),
+                    'valid_outputs': int(row['Valid_Works']),
+                    'completion_rate': (row['Valid_Works'] / row['Total_Works'] * 100) if row['Total_Works'] > 0 else 0
+                }
+            
+            return summary
+            
+        except Exception as e:
+            st.error(f"Get summary stats error: {e}")
+            return {}
+    
+    def get_works_count_data(self) -> Dict[str, Dict[str, Any]]:
+        """Get works count data for visualization"""
+        try:
+            # Recalculate from raw data
+            works_count_stats = self._recalculate_works_count_stats()
+            
+            if works_count_stats.empty:
+                return {}
+            
+            # Prepare chart data
+            chart_data = {}
+            for _, row in works_count_stats.iterrows():
+                question = row['Question']
+                chart_data[question] = {
+                    'total_works': row['Total_Works'],      # Total works count
+                    'valid_works': row['Valid_Works'],      # Filtered works count
+                    'unique_users': row['Unique_Users'],    # Unique user count
+                    # Maintain compatibility
+                    'users_with_works': row['Unique_Users'],
+                    'avg_works_per_user': (row['Valid_Works'] / row['Unique_Users']) if row['Unique_Users'] > 0 else 0
+                }
+            
+            return chart_data
+            
+        except Exception as e:
+            st.error(f"Get works count data error: {e}")
+            return {}
+    
+    def get_frequency_data(self, question: str = None) -> Dict[str, Any]:
+        """Get frequency analysis data"""
+        try:
+            # Recalculate from raw data
+            frequency_stats = self._recalculate_frequency_stats()
+            
+            if frequency_stats.empty:
+                return {}
+            
+            # If question is specified, filter data
+            if question:
+                question_data = frequency_stats[frequency_stats['Question'] == question]
+            else:
+                question_data = frequency_stats
+            
+            result = {}
+            for _, row in question_data.iterrows():
+                value = row['Value']
+                if value not in result:
+                    result[value] = 0
+                result[value] += int(row['Frequency'])
+            
+            return result
+            
+        except Exception as e:
+            st.error(f"Get frequency data error: {e}")
+            return {}
+    
+    def get_special_fields_data(self, question: str, variable: str = None) -> Dict[str, int]:
+        """Get special fields analysis data for specified question and variable"""
+        try:
+            # Recalculate from raw data
+            frequency_stats = self._recalculate_frequency_stats()
+            
+            if frequency_stats.empty:
+                return {}
+            
+            # Filter data for specified question
+            question_data = frequency_stats[frequency_stats['Question'] == question]
+            if question_data.empty:
+                return {}
+            
+            # If variable is specified, further filter
+            if variable:
+                question_data = question_data[question_data['Field'] == variable]
+            
+            result = {}
+            for _, row in question_data.iterrows():
+                value = str(row['Value'])[:80]  # Limit length to display complete labels
+                frequency = int(row['Frequency'])
+                result[value] = frequency
+            
+            return result
+            
+        except Exception as e:
+            st.error(f"Get special fields data error: {e}")
+            return {}
+    
+    def get_special_fields_variables(self, question: str) -> List[str]:
+        """Get all special field variable names for specified question"""
+        try:
+            # Recalculate from raw data
+            frequency_stats = self._recalculate_frequency_stats()
+            
+            if frequency_stats.empty:
+                return []
+            
+            question_data = frequency_stats[frequency_stats['Question'] == question]
+            variables = question_data['Field'].unique().tolist()
+            return variables
+        except Exception as e:
+            st.error(f"Get special field variables error: {e}")
+            return []
+    
+    def get_cpo_glo_distribution(self, question: str) -> Dict[str, int]:
+        """Get CPO/GLO code distribution for specified question"""
+        try:
+            # Recalculate from raw data
+            cpo_glo_stats = self._recalculate_cpo_glo_stats()
+            
+            if cpo_glo_stats.empty:
+                return {}
+            
+            question_data = cpo_glo_stats[cpo_glo_stats['Question'] == question]
+            if question_data.empty:
+                return {}
+            
+            # Take top 10 most frequent codes
+            top_data = question_data.head(10)
+            result = {}
+            for _, row in top_data.iterrows():
+                region = row['Region']
+                count = row['Count']
+                result[region] = count
+            
+            return result
+        except Exception as e:
+            st.error(f"Get CPO/GLO distribution error: {e}")
+            return {}
+    
+    def get_field_distribution(self, question: str, field_name: str) -> Dict[str, int]:
+        """Get distribution of values for a specific field in a question"""
+        try:
+            # Use filtered combined_data to ensure response region filtering
+            if self.combined_data is None or self.combined_data.empty:
+                return {}
+            
+            # Get data for specified question from filtered data
+            question_data = self.combined_data[self.combined_data['Question'] == question]
+            
+            if question_data.empty:
+                return {}
+            
+            # Check if field exists
+            if field_name not in question_data.columns:
+                return {}
+            
+            # Data standardization processing
+            field_data = question_data[field_name].copy()
+            
+            # More lenient null value handling - only remove truly empty values
+            field_data = field_data.dropna()
+            field_data = field_data[field_data.astype(str).str.strip() != '']
+            field_data = field_data[field_data.astype(str).str.strip() != 'nan']
+            
+            if field_data.empty:
+                return {}
+            
+            # Standardization processing: remove extra spaces, unify case format
+            field_data = field_data.astype(str).str.strip()  # Remove leading and trailing spaces
+            field_data = field_data.str.replace(r'\s+', ' ', regex=True)  # Replace multiple spaces with single space
+            
+            # Standardize common value formats
+            standardization_map = {
+                # Funding source standardization
+                'extrabudgetary': 'Extrabudgetary',
+                'extra budgetary': 'Extrabudgetary', 
+                'extra-budgetary': 'Extrabudgetary',
+                'EXTRABUDGETARY': 'Extrabudgetary',
+                'regular budget': 'Regular Budget',
+                'regularbudget': 'Regular Budget',
+                'REGULAR BUDGET': 'Regular Budget',
+                
+                # Publication type standardization
+                'technical report': 'Technical Report',
+                'Technical report': 'Technical Report',
+                'TECHNICAL REPORT': 'Technical Report',
+                'working paper': 'Working Paper',
+                'Working paper': 'Working Paper',
+                'WORKING PAPER': 'Working Paper',
+                'guidance/tools': 'Guidance/Tools',
+                'Guidance/tools': 'Guidance/Tools',
+                'GUIDANCE/TOOLS': 'Guidance/Tools',
+                'evaluation': 'Evaluation',
+                'EVALUATION': 'Evaluation',
+                'data/database': 'Data/Database',
+                'Data/database': 'Data/Database',
+                'DATA/DATABASE': 'Data/Database',
+                'best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'Best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'BEST PRACTICES/LESSONS LEARNED': 'Best Practices/Lessons Learned',
+                
+                # Youth-related standardization
+                'youth only': 'Youth Only',
+                'YOUTH ONLY': 'Youth Only',
+                'youth is one of the target groups': 'Youth Is One Of The Target Groups',
+                'YOUTH IS ONE OF THE TARGET GROUPS': 'Youth Is One Of The Target Groups',
+                
+                # Geographic focus standardization
+                'global': 'Global',
+                'GLOBAL': 'Global',
+                'regional': 'Regional',
+                'REGIONAL': 'Regional',
+                'national/local': 'National/Local',
+                'NATIONAL/LOCAL': 'National/Local',
+                
+                # Certification standardization
+                'yes': 'Yes',
+                'YES': 'Yes',
+                'no': 'No',
+                'NO': 'No',
+                
+                # Delivery mode standardization
+                'in person': 'In Person',
+                'IN PERSON': 'In Person',
+                'online': 'Online',
+                'ONLINE': 'Online',
+                'both': 'Both',
+                'BOTH': 'Both'
+            }
+            
+            # Apply standardization mapping
+            for old_value, new_value in standardization_map.items():
+                field_data = field_data.str.replace(old_value, new_value, case=False, regex=False)
+            
+            # Calculate field value distribution
+            field_counts = field_data.value_counts()
+            
+            return field_counts.to_dict()
+            
+        except Exception as e:
+            st.error(f"Get field distribution error for {question} - {field_name}: {e}")
+            return {}
+    def get_time_series_distribution(self, question: str, field_name: str) -> Dict[str, Dict[str, int]]:
+        """获取带有年份维度的 2D 分布数据（用于All视图的堆叠图）"""
+        try:
+            if self.combined_data is None or self.combined_data.empty: return {}
+            question_data = self.combined_data[self.combined_data['Question'] == question]
+            if question_data.empty or field_name not in question_data.columns: return {}
+            
+            # 提取年份列
+            year_col = 'YEAR' if 'YEAR' in question_data.columns else 'year' if 'year' in question_data.columns else None
+            if not year_col: return {}
+            
+            field_data = question_data[[field_name, year_col]].copy()
+            field_data = field_data.dropna()
+            field_data = field_data[field_data[field_name].astype(str).str.strip() != '']
+            field_data = field_data[field_data[field_name].astype(str).str.strip() != 'nan']
+            
+            # 标准化名称（复用现有的映射字典）
+            field_data[field_name] = field_data[field_name].astype(str).str.strip()
+            field_data[field_name] = field_data[field_name].str.replace(r'\s+', ' ', regex=True)
+            
+            standardization_map = {
+                'extrabudgetary': 'Extrabudgetary', 'extra budgetary': 'Extrabudgetary', 
+                'extra-budgetary': 'Extrabudgetary', 'EXTRABUDGETARY': 'Extrabudgetary',
+                'regular budget': 'Regular Budget', 'regularbudget': 'Regular Budget',
+                'REGULAR BUDGET': 'Regular Budget', 'technical report': 'Technical Report',
+                'Technical report': 'Technical Report', 'TECHNICAL REPORT': 'Technical Report',
+                'working paper': 'Working Paper', 'Working paper': 'Working Paper',
+                'WORKING PAPER': 'Working Paper', 'guidance/tools': 'Guidance/Tools',
+                'Guidance/tools': 'Guidance/Tools', 'GUIDANCE/TOOLS': 'Guidance/Tools',
+                'evaluation': 'Evaluation', 'EVALUATION': 'Evaluation',
+                'data/database': 'Data/Database', 'Data/database': 'Data/Database',
+                'DATA/DATABASE': 'Data/Database', 'best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'Best practices/lessons learned': 'Best Practices/Lessons Learned',
+                'BEST PRACTICES/LESSONS LEARNED': 'Best Practices/Lessons Learned',
+                'youth only': 'Youth Only', 'YOUTH ONLY': 'Youth Only',
+                'youth is one of the target groups': 'Youth Is One Of The Target Groups',
+                'YOUTH IS ONE OF THE TARGET GROUPS': 'Youth Is One Of The Target Groups',
+                'global': 'Global', 'GLOBAL': 'Global', 'regional': 'Regional',
+                'REGIONAL': 'Regional', 'national/local': 'National/Local',
+                'NATIONAL/LOCAL': 'National/Local', 'yes': 'Yes', 'YES': 'Yes',
+                'no': 'No', 'NO': 'No', 'in person': 'In Person', 'IN PERSON': 'In Person',
+                'online': 'Online', 'ONLINE': 'Online', 'both': 'Both', 'BOTH': 'Both'
+            }
+            
+            for old_value, new_value in standardization_map.items():
+                field_data[field_name] = field_data[field_name].str.replace(old_value, new_value, case=False, regex=False)
+            
+            # 清理年份格式 (将 2024.0 变为 2024)
+            field_data[year_col] = field_data[year_col].astype(str).apply(
+                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
+            )
+            field_data = field_data[field_data[year_col] != 'nan']
+            
+            # 交叉生成 2D 字典
+            crosstab = pd.crosstab(field_data[year_col], field_data[field_name])
+            return crosstab.to_dict(orient='index')
+        except Exception as e:
+            return {}
+    def get_all_years_theme_counts(self) -> pd.DataFrame:
+        """提取所有年份的 Cluster 对比数据"""
+        try:
+            if self.combined_data is None or self.combined_data.empty:
+                return pd.DataFrame()
+            
+            # 获取年份列名
+            year_col = 'YEAR' if 'YEAR' in self.combined_data.columns else 'year'
+            
+            # 按年份和问题类型分组统计
+            # 1. 统计每个年份、每个问题的 Unique Users
+            users_stat = self.combined_data.groupby([year_col, 'Question'])['UserId'].nunique().reset_index()
+            users_stat.rename(columns={'UserId': 'Number of staff reporting'}, inplace=True)
+            
+            # 2. 统计每个年份、每个问题的有效作品数 (Valid Works)
+            # 这里简化逻辑，直接统计行数，如需更精确可复用 _recalculate_works_count_stats 的过滤逻辑
+            works_stat = self.combined_data.groupby([year_col, 'Question']).size().reset_index()
+            works_stat.rename(columns={0: 'Number of outputs delivered'}, inplace=True)
+            
+            # 合并统计结果
+            df_merged = pd.merge(users_stat, works_stat, on=[year_col, 'Question'])
+            
+            # 映射问题标签
+            question_labels = {
+                'Q6': 'Knowledge development & dissemination',
+                'Q7': 'Technical assistance', 
+                'Q10': 'Capacity building',
+                'Q11': 'Advocacy & partnerships'
+            }
+            df_merged['Cluster'] = df_merged['Question'].map(question_labels)
+            
+            # 清理年份格式
+            df_merged[year_col] = df_merged[year_col].astype(str).apply(
+                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
+            )
+            
+            return df_merged
+        except Exception as e:
+            st.error(f"Error extracting multi-year counts: {e}")
+            return pd.DataFrame()
+
+def create_theme_count_chart(data_processor, current_theme=None):
+    """
+    升级版：支持单一年份和跨年份(All)的 Cluster 对比图
+    """
+    import plotly.graph_objects as go
+    selected_year = st.session_state.get('selected_year', 'All')
+    
+    # 统一获取配色[cite: 11]
+    colors = style_manager.get_chart_colors() if STYLES_AVAILABLE else STANDARD_COLORS
+    
+    # --- 情况 A：单一年份 (维持原状，但增加透明度高亮当前主题) ---
+    if selected_year != 'All':
+        # 获取单年统计数据
+        works_count_data = data_processor.get_works_count_data()
+        if not works_count_data:
+            return None
+
+        question_labels = {
+            'Q6': 'Knowledge development & dissemination',
+            'Q7': 'Technical assistance', 
+            'Q10': 'Capacity building',
+            'Q11': 'Advocacy & partnerships'
+        }
+        all_questions = ['Q6', 'Q7', 'Q10', 'Q11']
+        
+        question_display_labels = [question_labels.get(q, q) for q in all_questions]
+        unique_users = []
+        total_works = []
+        user_colors = []
+        work_colors = []
+
+        for q in all_questions:
+            val = works_count_data.get(q, {'unique_users': 0, 'valid_works': 0})
+            unique_users.append(val['unique_users'])
+            total_works.append(val['valid_works'])
+            
+            # 透明度处理：如果是在专项页面，高亮显示该页面的柱子[cite: 16]
+            if current_theme and q != current_theme:
+                # 转换为 rgba 格式实现透明感[cite: 16]
+                c1, c2 = colors[0], colors[1]
+                user_colors.append(f"rgba({int(c1[1:3],16)}, {int(c1[3:5],16)}, {int(c1[5:7],16)}, 0.3)")
+                work_colors.append(f"rgba({int(c2[1:3],16)}, {int(c2[3:5],16)}, {int(c2[5:7],16)}, 0.3)")
+            else:
+                user_colors.append(colors[0])
+                work_colors.append(colors[1])
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(name='Number of staff reporting', x=question_display_labels, y=unique_users, marker_color=user_colors))
+        fig.add_trace(go.Bar(name='Number of outputs delivered', x=question_display_labels, y=total_works, marker_color=work_colors))
+        
+        chart_title = 'Number of Outputs Delivered by Cluster'
+
+    # --- 情况 B：选择 ALL (跨年份对比大 Boss) ---
+    else:
+        # 使用我们在 DataProcessor 中新增的方法获取多年数据
+        df = data_processor.get_all_years_theme_counts()
+        if df.empty:
+            return None
+            
+        year_col = 'YEAR' if 'YEAR' in df.columns else 'year'
+        fig = go.Figure()
+        
+        clusters = [
+            'Knowledge development & dissemination',
+            'Technical assistance', 
+            'Capacity building',
+            'Advocacy & partnerships'
+        ]
+        
+        for i, cluster in enumerate(clusters):
+            cluster_df = df[df['Cluster'] == cluster].sort_values(year_col)
+            
+            # 使用同色系：Staff 用浅色 (透明度0.4)，Outputs 用深色 (不透明)
+            # 这样一组(一类颜色)就代表一个 Cluster 随年份的变化趋势
+            fig.add_trace(go.Bar(
+                name=f"{cluster} (Staff)",
+                x=cluster_df[year_col],
+                y=cluster_df['Number of staff reporting'],
+                marker_color=colors[i % len(colors)],
+                opacity=0.4,
+                hovertemplate='Year: %{x}<br>Staff: %{y}<extra></extra>'
+            ))
+            fig.add_trace(go.Bar(
+                name=f"{cluster} (Outputs)",
+                x=cluster_df[year_col],
+                y=cluster_df['Number of outputs delivered'],
+                marker_color=colors[i % len(colors)],
+                hovertemplate='Year: %{x}<br>Outputs: %{y}<extra></extra>'
+            ))
+            
+        chart_title = 'Annual Progress Comparison by Cluster (2024-2030)'
+
+    # --- 通用布局设置 (统一应用你的全局样式) ---
+    layout_config = style_manager.get_global_chart_config('layout').copy() if STYLES_AVAILABLE else {}
+    
+    # 特别处理换行和间距
+    fig.update_layout(
+        title={'text': chart_title, 'x': 0.5, 'xanchor': 'center'},
+        barmode='group',
+        height=600,
+        xaxis={'type': 'category', 'title': 'Reporting Period'},
+        yaxis={'title': 'Count'},
+        legend={'orientation': "h", 'yanchor': 'top', 'y': -0.2, 'xanchor': 'center', 'x': 0.5},
+        margin={'t': 80, 'b': 150, 'l': 50, 'r': 50}
+    )
+    
+    if STYLES_AVAILABLE:
+        fig.update_layout(font=layout_config.get('font', {}))
+        
+    return fig
+
+def create_theme_detail_list(data_processor, question):
+    """Create detail list for specific question/theme"""
+    if data_processor.combined_data is None or data_processor.combined_data.empty:
+        return None
+    
+    # Filter data for specific question
+    works_df = data_processor.combined_data[data_processor.combined_data['Question'] == question].copy()
+    
+    if works_df.empty:
+        return None
+    
+    # Project name column mapping
+    project_name_mapping = {
+        'Q6': 'Initiative/output\'s name??',
+        'Q7': 'Initiative/programme/project\'s name??',
+        'Q10': 'Course/programme/project\'s name??',
+        'Q11': 'Output/initiative/programme/project\'s name??'
+    }
+    
+    project_col = project_name_mapping.get(question)
+    
+    # Filter to only show records that have a valid project name
+    if project_col and project_col in works_df.columns:
+        has_project_name = (
+            works_df[project_col].notna() & 
+            (works_df[project_col].astype(str).str.strip() != '') & 
+            (works_df[project_col].astype(str).str.strip() != 'None') &
+            (works_df[project_col].astype(str).str.strip() != 'nan') &
+            (works_df[project_col].astype(str).str.lower().str.strip() != 'none')
+        )
+        works_df = works_df[has_project_name].copy()
+    
+    if works_df.empty:
+        return None
+    
+    # Select relevant columns for display
+    display_columns = ['Question', 'UserId']
+    
+    # Add Department/Region if available
+    if 'Department/Region' in works_df.columns:
+        display_columns.append('Department/Region')
+    
+    # Add project name column
+    if project_col and project_col in works_df.columns:
+        display_columns.append(project_col)
+    
+    # Create final display dataframe
+    display_df = works_df[display_columns].copy()
+    
+    # Rename project column to unified name
+    if project_col and project_col in display_df.columns:
+        display_df = display_df.rename(columns={project_col: 'Project Name'})
+    
+    return display_df
+    """Legacy chart creation function - deprecated, use unified style create_chart function"""
+    if STYLES_AVAILABLE:
+        # Convert data format to dictionary
+        if hasattr(data, 'index'):
+            # Series data
+            chart_data = dict(zip(data.index, data.values))
+        else:
+            # DataFrame data
+            if len(data.columns) >= 2:
+                chart_data = dict(zip(data.iloc[:, 0], data.iloc[:, 1]))
+            else:
+                chart_data = dict(zip(data.index, data.iloc[:, 0]))
+        
+        # Use unified style to create chart
+        return create_chart(chart_data, chart_type, title)
+    else:
+        # Fallback chart creation logic
+        colors = STANDARD_COLORS
+        
+        if hasattr(data, 'index'):
+            # Series data
+            categories = data.index.tolist()
+            values = data.values.tolist()
+        else:
+            # DataFrame data
+            if len(data.columns) >= 2:
+                categories = data.iloc[:, 0].tolist()
+                values = data.iloc[:, 1].tolist()
+            else:
+                categories = data.index.tolist()
+                values = data.iloc[:, 0].tolist()
+        
+        fig = go.Figure()
+        
+        if chart_type == 'pie':
+            fig.add_trace(go.Pie(
+                labels=categories,
+                values=values,
+                marker_colors=colors[:len(categories)],
+                hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+            ))
+        elif chart_type == 'horizontal_bar':
+            fig.add_trace(go.Bar(
+                x=values,
+                y=categories,
+                orientation='h',
+                marker_color=colors[0],
+                hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
+            ))
+            fig.update_layout(
+                xaxis_title='',  # 删除X轴标签
+                yaxis_title=''   # 删除Y轴标签
+            )
+        else:  # bar chart
+            fig.add_trace(go.Bar(
+                x=categories,
+                y=values,
+                marker_color=colors[0],
+                hovertemplate='<b>%{x}</b><br>Count: %{y}<extra></extra>'
+            ))
+            fig.update_layout(
+                xaxis_title='',  # 删除X轴标签
+                yaxis_title=''   # 删除Y轴标签
+            )
+        
+        fig.update_layout(
+            title=title,
+            title_font_size=20,
+            title_x=0.5,
+            title_xanchor='center',
+            height=400,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            font_family="'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+        )
+        
+        # 为饼图添加居中配置
+        if chart_type == 'pie':
+            fig.update_layout(
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.02,
+                    bgcolor="rgba(255,255,255,0.9)",
+                    bordercolor="rgba(0,0,0,0.2)",
+                    borderwidth=1,
+                    font=dict(size=12),
+                    itemwidth=30,
+                    tracegroupgap=5,
+                    itemsizing="constant",
+                    entrywidth=120,
+                    entrywidthmode="pixels"
+                ),
+                margin=dict(l=20, r=260, t=60, b=20),
+                autosize=True
+            )
+        
+        # Keep chart title in Overpass
+        fig.update_layout(title={'text': title, 'font': {'family': "'Overpass', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"}})
+        
+        return fig
+
+
+def apply_region_filter_to_processor(data_processor, filtered_user_ids):
+    """Filter data in data processor based on filtered user IDs"""
+    try:
+        # Filter data in combined_data
+        if data_processor.combined_data is not None and not data_processor.combined_data.empty:
+            # Assume combined_data has UserId or User ID column
+            if 'UserId' in data_processor.combined_data.columns:
+                data_processor.combined_data = data_processor.combined_data[
+                    data_processor.combined_data['UserId'].isin(filtered_user_ids)
+                ]
+            elif 'User ID' in data_processor.combined_data.columns:
+                data_processor.combined_data = data_processor.combined_data[
+                    data_processor.combined_data['User ID'].isin(filtered_user_ids)
+                ]
+        
+        # Recalculate statistics
+        data_processor._recalculate_works_count_stats()
+        
+    except Exception as e:
+        st.warning(f"Error applying region filter: {str(e)}")
+    
+    return data_processor
+
+def create_layout():
+    """Create the main Streamlit layout with theme-based organization"""
+    # Add unified header first
+    create_unified_header()
+
+    # Inject top anchor and robust scroll-to-top to ensure page resets to top on render
+    try:
+        st.markdown('<div id="yeap-top-anchor"></div>', unsafe_allow_html=True)
+        import streamlit.components.v1 as components
+        components.html(
+            """
+            <script>
+            (function() {
+              const MAX_FRAMES = 80;
+              let frames = 0;
+              try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch (e) {}
+              function doScroll() {
+                try {
+                  const doc = window.parent && window.parent.document ? window.parent.document : document;
+                  const anchor = doc.getElementById('yeap-top-anchor');
+                  if (anchor && typeof anchor.scrollIntoView === 'function') {
+                    try { anchor.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' }); } catch (e) {}
+                  }
+                  const containers = [
+                    doc.documentElement,
+                    doc.body,
+                    doc.querySelector('[data-testid="stAppViewContainer"]'),
+                    doc.querySelector('[data-testid="block-container"]'),
+                    doc.querySelector('section.main'),
+                    doc.querySelector('.main'),
+                    doc.querySelector('.block-container')
+                  ].filter(Boolean);
+                  containers.forEach(el => { try { el.style.scrollBehavior = 'auto'; el.scrollTop = 0; } catch (e) {} });
+                  try { (window.parent && window.parent.scrollTo ? window.parent.scrollTo(0, 0) : window.scrollTo(0, 0)); } catch (e) {}
+                } catch (err) {}
+                if (++frames < MAX_FRAMES) requestAnimationFrame(doScroll);
+              }
+              requestAnimationFrame(doScroll);
+            })();
+            </script>
+            """,
+            height=1,
+        )
+    except Exception:
+        pass
+    
+    # Apply page styles
+    if STYLES_AVAILABLE:
+        apply_page_style()
+    else:
+        st.set_page_config(
+            page_title="ILO Youth Employment Action Plan (YEAP)",
+            page_icon="📊",
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+    
+    # Define base_path
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # Get selected section from session state to determine page-specific titles
+    selected_section = st.session_state.get('selected_analysis_section', "Outputs Count Statistics")
+    
+    # Define page-specific titles and subtitles
+    page_titles = {
+        "Outputs Count Statistics": {
+            "title": "📊 Clusters Of The Implementation Framework",
+            "subtitle": "Overview of output counts across all analysis areas"
+        },
+        "Knowledge Development & Dissemination": {
+            "title": "📚 Knowledge Development & Dissemination",
+            "subtitle": """This tab highlights the ILO's efforts to generate, analyse and share **evidence-based knowledge** to guide the design and implementation of **youth employment strategies**.
+
+Activities reported under this cluster include trends and diagnostics studies, **labour market analyses**, and research on **future-of-work trends** and their impact on young people.
+
+Outputs also cover the production and dissemination of **publications, tools and knowledge products**, shared through platforms such as [Youth Foresight](https://www.youthforesight.org/).
+
+**Additional resources:**
+- [Youth employment | International Labour Organization](https://www.ilo.org/topics-and-sectors/youth-employment)
+- [Global Employment Trends for Youth 2024 | International Labour Organization](https://www.ilo.org/publications/major-publications/global-employment-trends-youth-2024)
+- [Statistics on youth - ILOSTAT](https://ilostat.ilo.org/topics/youth/)"""
+        },
+        "Technical Assistance": {
+            "title": "🔧 Technical Assistance", 
+            "subtitle": """This tab highlights the ILO's technical support to countries in developing and implementing **gender-responsive youth employment policies and strategies**. Activities include support for **national employment policies**, **entrepreneurship programmes**, **job creation measures**, and **social protection for youth**. It also covers policy responses to **future-of-work trends**, such as **technology, climate change**, and the **care economy**, as well as efforts to promote **equal opportunities**, **rights at work**, and a **just transition**.
+
+**Additional resources:**
+- [ILO Employment Policy Gateway](https://webapps.ilo.org/empolgateway/)"""
+        },
+        "Capacity Development": {
+            "title": "🎓 Capacity Development",
+            "subtitle": """This tab highlights ILO's support to **strengthen the capacities** of governments, employers' and workers' organizations, and partners to design and implement effective youth employment strategies.
+
+The ILO promotes **knowledge exchange**, **institutional strengthening**, and **tripartite collaboration** to advance inclusive and sustainable employment for youth.
+
+**Additional resources:**
+- [Youth employment | ITCILO](https://www.itcilo.org/topics/youth-employment)"""
+        },
+        "Advocacy & Partnerships": {
+            "title": "🤝 Advocacy & Partnerships",
+            "subtitle": """This tab highlights the ILO's efforts to develop and nurture strategic partnerships and advocacy at global, regional, and national levels. Outputs include multi-stakeholder alliances (including through the [Global Initiative on Decent Jobs for Youth](https://www.decentjobsforyouth.org/)), as well as partnerships with UN agencies, donors, and youth organizations, among others."""
+        }
+    }
+    
+    # Display page-specific title and subtitle
+    current_page = page_titles.get(selected_section, page_titles["Outputs Count Statistics"])
+    st.subheader(current_page["title"])
+    st.markdown(current_page['subtitle'])
+    st.markdown("---")
+
+    # Add region filtering functionality - moved before data processor initialization
+    
+    # Check if region data exists
+    has_region_data = False
+    selected_region = 'All'
+    regions_set = set()
+    original_data = pd.DataFrame()
+    filtered_user_ids = None
+    
+    try:
+        # If global shared selection exists, reuse it
+        if 'selected_region' in st.session_state and 'regions_options' in st.session_state:
+            selected_region = st.session_state['selected_region']
+            regions = st.session_state['regions_options']
+            has_region_data = True
+            selected_year = st.session_state.get('selected_year', 'All')
+            # Build original_data from PART3 files still needed for filtering and counts
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            data_files = [
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ6.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ7.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ10.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ11.csv')
+            ]
+            combined_original_data = []
+            for file_path in data_files:
+                if os.path.exists(file_path):
+                    df = safe_read_csv(file_path)
+                    # Apply YEAR filter if available
+                    try:
+                        if selected_year != 'All':
+                            # Check for both 'YEAR' and 'year' columns
+                            if 'YEAR' in df.columns:
+                                df = df[df['YEAR'].astype(str).str.strip() == str(selected_year)]
+                            elif 'year' in df.columns:
+                                df = df[df['year'].astype(str).str.strip() == str(selected_year)]
+                    except Exception:
+                        pass
+                    if 'Department/Region' in df.columns:
+                        combined_original_data.append(df)
+            if combined_original_data:
+                original_data = pd.concat(combined_original_data, ignore_index=True, sort=False)
+            else:
+                original_data = pd.DataFrame()
+        else:
+            # Fallback to local construction (original logic)
+            # Get absolute path of project root directory
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            
+            data_files = [
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ6.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ7.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ10.csv'),
+                os.path.join(project_root, 'orignaldata', 'PART3_base_dataQ11.csv')
+            ]
+            
+            combined_original_data = []
+            selected_year = st.session_state.get('selected_year', 'All')
+            for file_path in data_files:
+                if os.path.exists(file_path):
+                    df = safe_read_csv(file_path)
+                    # Apply YEAR filter if available
+                    try:
+                        if selected_year != 'All':
+                            # Check for both 'YEAR' and 'year' columns
+                            if 'YEAR' in df.columns:
+                                df = df[df['YEAR'].astype(str).str.strip() == str(selected_year)]
+                            elif 'year' in df.columns:
+                                df = df[df['year'].astype(str).str.strip() == str(selected_year)]
+                    except Exception:
+                        pass
+                    if 'Department/Region' in df.columns:
+                        regions_set.update(df['Department/Region'].dropna().unique())
+                        has_region_data = True
+                        combined_original_data.append(df)
+                    elif 'Department/Region' in df.columns:  # Chinese column name
+                        regions_set.update(df['Department/Region'].dropna().unique())
+                        has_region_data = True
+                        combined_original_data.append(df)
+            
+            # Combine all original data
+            if combined_original_data:
+                original_data = pd.concat(combined_original_data, ignore_index=True, sort=False)
+            else:
+                original_data = pd.DataFrame()
+            
+            if has_region_data and regions_set:
+                regions = ['All'] + sorted(list(regions_set))
+
+                # Improve display: insert soft wrap opportunities so long texts can wrap gracefully
+                def _wrap_label(s):
+                    s = str(s)
+                    # Insert zero-width space after common separators to allow wrapping
+                    for ch in ['/', '\\', '-', '—', '–', '_', ' ', '（', '）', '(', ')', ':', '：', ',', '·']:
+                        s = s.replace(ch, ch + '\u200B')
+                    return s
+
+                selected_region = st.sidebar.selectbox(
+                    "Select Organizational Unit",
+                    regions,
+                    format_func=_wrap_label
+                )
+            elif has_region_data and not regions_set:
+                st.sidebar.info("Regional filtering not available - no region data found.")
+            else:
+                st.sidebar.info("Regional filtering not available - data file not found.")
+    except Exception as e:
+        st.sidebar.info(f"Regional filtering not available - error: {str(e)}")
+    
+    # Apply region filtering (similar to Dash version logic)
+    filtered_data = original_data
+    if has_region_data and selected_region != 'All' and not original_data.empty:
+        try:
+            if 'Department/Region' in original_data.columns:
+                filtered_data = original_data[original_data['Department/Region'] == selected_region]
+            elif 'Department/Region' in original_data.columns:  # Chinese column name
+                filtered_data = original_data[original_data['Department/Region'] == selected_region]
+            
+            if not filtered_data.empty:
+                st.info(f"Showing data for: {selected_region} ({len(filtered_data)} records)")
+                # Get filtered user IDs
+                if 'UserId' in filtered_data.columns:
+                    filtered_user_ids = filtered_data['UserId'].unique()
+            else:
+                st.warning(f"No data found for region: {selected_region}. Showing all data.")
+                filtered_data = original_data
+        except Exception as e:
+            st.warning(f"Region filtering encountered an issue: {str(e)}. Showing all data.")
+            filtered_data = original_data
+    
+    # Initialize data processor (after filtering logic)
+    data_processor = Q6Q7Q10Q11DataProcessor(base_path)
+    
+    # If there are filtering conditions, apply to data processor
+    if filtered_user_ids is not None:
+        data_processor = apply_region_filter_to_processor(data_processor, filtered_user_ids)
+    
+    # Check if data is available
+    if (data_processor.combined_data is None or data_processor.combined_data.empty):
+        st.warning("No data available to display. Please ensure the data files are in the correct location.")
+        return
+
+    # Get works count data for all themes
+    works_count_data = data_processor.get_works_count_data()
+    
+    # Check if any meaningful data exists for display
+    has_any_data = False
+    if works_count_data:
+        # Check if any theme has valid data
+        for theme_data in works_count_data.values():
+            if theme_data.get('valid_works', 0) > 0:
+                has_any_data = True
+                break
+    
+    # If no meaningful data exists, show single warning and return
+    if not has_any_data:
+        st.warning("No data available")
+        return
+    
+    # Define theme information
+    themes = {
+        'Q6': {
+            'title': '📚 Knowledge Development & Dissemination',
+            'color': '#f0f8ff',
+            'charts': [
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Knowledge Development And Dissemination Outputs'),
+                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Knowledge Development And Dissemination Outputs'),
+                ('Type of publication (Options: Evaluation, or Guidance/tools, or Technical Report, or Working paper, or Data/Database) ', 'bar', 'Types Of Knowledge Development And Dissemination Outputs Delivered')
+            ]
+        },
+        'Q7': {
+            'title': '🔧 Technical Assistance',
+            'color': '#f0fff0',
+            'charts': [
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source Of Technical Assistance Outputs'),
+                ('Focus \n(Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Technical Assistance Outputs'),
+                ('Country or Region', 'bar', 'Technical Assistance Outputs Across Regions')
+            ]
+        },
+        'Q10': {
+            'title': '🎓 Capacity Development',
+            'color': '#fff8f0',
+            'charts': [
+                ('In person or online or both', 'pie', 'Delivery Mode Of Capacity Development Outputs'),
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Capacity Development Outputs'),
+                ('With certification (Yes or No)', 'pie', 'Capacity Development Outputs & Certification'),
+                ('Focus (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group Of Capacity Development Outputs')
+            ]
+        },
+        'Q11': {
+            'title': '🤝 Advocacy & Partnerships',
+            'color': '#fdf0ff',
+            'charts': [
+                ('Type of partnership\n(Options: UN interagency initiative; or multistakeholder initiative; or bilateral partnership; or event; or campaign; or challenge)', 'bar', 'Types Of Advocacy Or Partnership Outputs'),
+                ('Focus\n (Options: Youth only or Youth is one of the target groups)', 'pie', 'Target Group For Advocacy & Partnerships Outputs'),
+                ('Specify name of the Region/country', 'bar', 'Advocacy & Partnership Outputs Across Regions'),
+                ('Funding source (Options: regular budget or extrabudgetary)', 'pie', 'Funding Source For Advocacy & Partnerships Related Outputs'),
+                ('Geographical focus (Global, Regional  or National/local)', 'pie', 'Geographical Focus Of Advocacy And Partnerships Outputs')
+            ]
+        }
+    }
+    
+    # Display content based on selected section
+    if selected_section == "Outputs Count Statistics":
+        # Section 1: Outputs Count Statistics only
+        if works_count_data:
+            count_fig = create_theme_count_chart(data_processor, current_theme=None)
+            if count_fig:
+                st.plotly_chart(count_fig, width='stretch')
+        # Note: Removed redundant warning messages as they are handled at the top level
+    
+    else:
+        # Find the corresponding theme for the selected section
+        theme_mapping = {
+            "Knowledge Development & Dissemination": "Q6",
+            "Technical Assistance": "Q7", 
+            "Capacity Development": "Q10",
+            "Advocacy & Partnerships": "Q11"
+        }
+        
+        question = theme_mapping[selected_section]
+        theme_info = themes[question]
+        
+        # Removed duplicate theme header under page title to avoid repetition
+        # (Previously rendered a colored container with the same title.)
+        
+        # Add Outputs Count Statistics chart for all modules
+        if selected_section in ["Knowledge Development & Dissemination", "Technical Assistance", "Capacity Development", "Advocacy & Partnerships"]:
+            st.subheader("📊 Clusters Of The Implementation Framework")
+            if works_count_data:
+                # Map section to theme
+                theme_mapping = {
+                    "Knowledge Development & Dissemination": "Q6",
+                    "Technical Assistance": "Q7",
+                    "Capacity Development": "Q10",
+                    "Advocacy & Partnerships": "Q11"
+                }
+                current_theme = theme_mapping[selected_section]
+                count_fig = create_theme_count_chart(data_processor, current_theme=current_theme)
+                if count_fig:
+                    st.plotly_chart(count_fig, width='stretch')
+            # Note: Removed redundant warning messages as they are handled at the top level
+            
+            st.markdown("---")  # Add separator
+        
+        # Section 2: Frequency Analysis
+        st.subheader("📊 Frequency Analysis")
+        
+        # Check if any frequency data exists for this theme
+        has_frequency_data = False
+        for field_name, chart_type, chart_title in theme_info['charts']:
+            field_data = data_processor.get_field_distribution(question, field_name)
+            if field_data:
+                has_frequency_data = True
+                break
+        
+        if has_frequency_data:
+            selected_year = st.session_state.get('selected_year', 'All')
+            
+            # 定义哪些特定的图表在选 All 时需要变成折线图
+            line_chart_targets = [
+                'Types Of Knowledge Development And Dissemination Outputs Delivered',
+                'Types Of Advocacy Or Partnership Outputs',
+                'Types Of Advocacy & Partnerships Delivered'
+            ]
+            
+            for field_name, chart_type, chart_title in theme_info['charts']:
+                
+                # ---------------- 智能拦截逻辑 ----------------
+                if selected_year == 'All' and chart_type == 'pie':
+                    # 1. 饼图 -> 100% 堆叠柱状图
+                    field_data = data_processor.get_time_series_distribution(question, field_name)
+                    preserve_order = False
+                    
+                elif selected_year == 'All' and chart_title in line_chart_targets:
+                    # 2. 特定的柱状图 -> 多折线图
+                    field_data = data_processor.get_time_series_distribution(question, field_name)
+                    chart_type = 'line'  # 通知底层画折线
+                    
+                    # 针对 Q11 合作模式的自定义排序处理（二维字典版）
+                    if question == 'Q11' and 'Type of partnership' in field_name:
+                        custom_order = [
+                            'multistakeholder initiative', 'bilateral partnership',
+                            'UN interagency initiative', 'campaign', 'event', 'challenge'
+                        ]
+                        ordered_data = {}
+                        for y, cats in field_data.items():
+                            ordered_cats = {}
+                            for item in custom_order:
+                                if item in cats: ordered_cats[item] = cats[item]
+                            for k, v in cats.items():
+                                if k not in ordered_cats: ordered_cats[k] = v
+                            ordered_data[y] = ordered_cats
+                        field_data = ordered_data
+                        preserve_order = True
+                    else:
+                        preserve_order = False
+
+                else:
+                    # 3. 普通的 1D 数据处理（单一年份图表 或 维持原状的其它柱图）
+                    field_data = data_processor.get_field_distribution(question, field_name)
+                    
+                    if field_data:
+                        if 'Region' in chart_title or 'Regions' in chart_title:
+                            field_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
+                        
+                        if question == 'Q11' and 'Type of partnership' in field_name:
+                            custom_order = [
+                                'multistakeholder initiative', 'bilateral partnership',
+                                'UN interagency initiative', 'campaign', 'event', 'challenge'
+                            ]
+                            ordered_data = {}
+                            for item in custom_order:
+                                if item in field_data: ordered_data[item] = field_data[item]
+                            for key, value in field_data.items():
+                                if key not in ordered_data: ordered_data[key] = value
+                            field_data = ordered_data
+                            preserve_order = True
+                        else:
+                            preserve_order = False
+                # ----------------------------------------------
+                
+                if field_data:
+                    fig = create_chart(field_data, chart_type, chart_title, preserve_order=preserve_order)
+                    st.plotly_chart(fig, width='stretch')
+        # Section 3: Outputs Detail List
+        st.subheader("📋 Outputs Detail List")
+        
+        detail_df = create_theme_detail_list(data_processor, question)
+        if detail_df is not None and not detail_df.empty:
+            total_records = len(detail_df)
+            
+            # Initialize session state for current page if not exists
+            page_key = f'outputs_current_page_{question}'
+            if page_key not in st.session_state:
+                st.session_state[page_key] = 1
+            
+            # Get current page data
+            items_per_page = st.session_state.get('items_per_page', 50)
+            total_pages = (total_records - 1) // items_per_page + 1
+            
+            # Calculate display range
+            start_idx = (st.session_state[page_key] - 1) * items_per_page
+            end_idx = min(start_idx + items_per_page, total_records)
+            
+            # Get current page data
+            display_df = detail_df.iloc[start_idx:end_idx].copy()
+            
+            st.dataframe(display_df, width='stretch')
+            
+            # Compact pagination controls
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # First row: Page info centered at the top
+            st.markdown(
+                f"<div style='text-align: center; margin: 10px 0;'>"
+                f"<strong>Page {st.session_state[page_key]} of {total_pages}</strong> | "
+                f"Showing {start_idx + 1}-{end_idx} of {total_records} records"
+                f"</div>", 
+                unsafe_allow_html=True
+            )
+            
+            # Second row: Items per page and Jump to page side by side
+            control_col1, control_col2 = st.columns([1, 1])
+            
+            with control_col1:
+                # Items per page
+                new_items_per_page = st.selectbox(
+                    "Items per page:",
+                    options=[10, 25, 50, 100, 200],
+                    index=[10, 25, 50, 100, 200].index(items_per_page) if items_per_page in [10, 25, 50, 100, 200] else 2,
+                    key=f"items_per_page_{question}"
+                )
+                
+                if new_items_per_page != items_per_page:
+                    st.session_state.items_per_page = new_items_per_page
+                    st.session_state[page_key] = 1
+                    st.rerun()
+            
+            with control_col2:
+                # Jump to page
+                new_page = st.number_input(
+                    "Jump to page:",
+                    min_value=1,
+                    max_value=total_pages,
+                    value=st.session_state[page_key],
+                    key=f"page_input_{question}"
+                )
+                if new_page != st.session_state[page_key]:
+                    st.session_state[page_key] = new_page
+                    st.rerun()
+            
+            # Navigation buttons removed; use Jump to page for pagination.
+        # Note: Removed redundant warning message as it's handled at the top level
+
+if __name__ == "__main__":
+    create_layout()
