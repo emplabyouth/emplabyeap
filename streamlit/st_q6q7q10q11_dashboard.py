@@ -580,14 +580,15 @@ class Q6Q7Q10Q11DataProcessor:
         except Exception as e:
             st.error(f"Get field distribution error for {question} - {field_name}: {e}")
             return {}
+
     def get_time_series_distribution(self, question: str, field_name: str) -> Dict[str, Dict[str, int]]:
-        """获取带有年份维度的 2D 分布数据（用于All视图的堆叠图）"""
+        """Get 2D distribution data with year dimension (for stacked charts in All view)"""
         try:
             if self.combined_data is None or self.combined_data.empty: return {}
             question_data = self.combined_data[self.combined_data['Question'] == question]
             if question_data.empty or field_name not in question_data.columns: return {}
             
-            # 提取年份列
+            # Extract year column
             year_col = 'YEAR' if 'YEAR' in question_data.columns else 'year' if 'year' in question_data.columns else None
             if not year_col: return {}
             
@@ -596,7 +597,7 @@ class Q6Q7Q10Q11DataProcessor:
             field_data = field_data[field_data[field_name].astype(str).str.strip() != '']
             field_data = field_data[field_data[field_name].astype(str).str.strip() != 'nan']
             
-            # 标准化名称（复用现有的映射字典）
+            # Standardize names (reusing existing mapping dictionary)
             field_data[field_name] = field_data[field_name].astype(str).str.strip()
             field_data[field_name] = field_data[field_name].str.replace(r'\s+', ' ', regex=True)
             
@@ -627,71 +628,104 @@ class Q6Q7Q10Q11DataProcessor:
             for old_value, new_value in standardization_map.items():
                 field_data[field_name] = field_data[field_name].str.replace(old_value, new_value, case=False, regex=False)
             
-            # 清理年份格式 (将 2024.0 变为 2024)
+            # Clean up year format (convert 2024.0 to 2024)
             field_data[year_col] = field_data[year_col].astype(str).apply(
                 lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
             )
             field_data = field_data[field_data[year_col] != 'nan']
             
-            # 交叉生成 2D 字典
+            # Generate cross-tabulated 2D dictionary
             crosstab = pd.crosstab(field_data[year_col], field_data[field_name])
             return crosstab.to_dict(orient='index')
         except Exception as e:
             return {}
+
     def get_all_years_theme_counts(self) -> pd.DataFrame:
-        """提取所有年份的 Cluster 对比数据"""
+        """Extract multi-year Cluster comparison data, using the exact same precise cleaning logic as single-year stats"""
         try:
             if self.combined_data is None or self.combined_data.empty:
                 return pd.DataFrame()
             
-            # 获取年份列名
             year_col = 'YEAR' if 'YEAR' in self.combined_data.columns else 'year'
-            
-            # 按年份和问题类型分组统计
-            # 1. 统计每个年份、每个问题的 Unique Users
-            users_stat = self.combined_data.groupby([year_col, 'Question'])['UserId'].nunique().reset_index()
-            users_stat.rename(columns={'UserId': 'Number of staff reporting'}, inplace=True)
-            
-            # 2. 统计每个年份、每个问题的有效作品数 (Valid Works)
-            # 这里简化逻辑，直接统计行数，如需更精确可复用 _recalculate_works_count_stats 的过滤逻辑
-            works_stat = self.combined_data.groupby([year_col, 'Question']).size().reset_index()
-            works_stat.rename(columns={0: 'Number of outputs delivered'}, inplace=True)
-            
-            # 合并统计结果
-            df_merged = pd.merge(users_stat, works_stat, on=[year_col, 'Question'])
-            
-            # 映射问题标签
+            questions = ['Q6', 'Q7', 'Q10', 'Q11']
             question_labels = {
                 'Q6': 'Knowledge development & dissemination',
                 'Q7': 'Technical assistance', 
                 'Q10': 'Capacity building',
                 'Q11': 'Advocacy & partnerships'
             }
-            df_merged['Cluster'] = df_merged['Question'].map(question_labels)
             
-            # 清理年份格式
-            df_merged[year_col] = df_merged[year_col].astype(str).apply(
-                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x.strip()
+            results = []
+            
+            # Safely extract and clean all existing years
+            temp_df = self.combined_data.copy()
+            temp_df['clean_year'] = temp_df[year_col].astype(str).str.strip().apply(
+                lambda x: str(int(float(x))) if '.' in x and x.replace('.','').isdigit() else x
             )
+            years = temp_df['clean_year'].unique()
+            years = [y for y in years if y != 'nan' and y != '']
             
-            return df_merged
+            for y in years:
+                year_data = temp_df[temp_df['clean_year'] == y]
+                
+                for question in questions:
+                    question_data = year_data[year_data['Question'] == question]
+                    
+                    valid_works = 0
+                    users_with_valid_works = 0
+                    
+                    if not question_data.empty:
+                        # --- Exactly replicate the filtering logic of _recalculate_works_count_stats ---
+                        work_name_columns = [col for col in question_data.columns if 'name' in col.lower() or 'work' in col.lower()]
+                        
+                        if work_name_columns:
+                            valid_mask = question_data[work_name_columns].notna().any(axis=1)
+                            for col in work_name_columns:
+                                if col in question_data.columns:
+                                    valid_mask = valid_mask & (question_data[col].astype(str).str.strip() != '')
+                            valid_works = valid_mask.sum()
+                        else:
+                            exclude_cols = ['UserId', 'User ID', 'Region', 'Question', 'clean_year', 'YEAR', 'year']
+                            content_cols = [col for col in question_data.columns if col not in exclude_cols]
+                            if content_cols:
+                                valid_works = question_data[content_cols].notna().any(axis=1).sum()
+                        
+                        user_id_col = 'UserId' if 'UserId' in question_data.columns else 'User ID'
+                        if user_id_col in question_data.columns:
+                            if work_name_columns:
+                                users_with_valid_works = question_data[valid_mask][user_id_col].nunique()
+                            else:
+                                if content_cols:
+                                    valid_mask = question_data[content_cols].notna().any(axis=1)
+                                    users_with_valid_works = question_data[valid_mask][user_id_col].nunique()
+                                    
+                    results.append({
+                        year_col: y,
+                        'Question': question,
+                        'Cluster': question_labels.get(question, question),
+                        'Number of staff reporting': users_with_valid_works,
+                        'Number of outputs delivered': valid_works
+                    })
+                    
+            return pd.DataFrame(results)
+            
         except Exception as e:
             st.error(f"Error extracting multi-year counts: {e}")
             return pd.DataFrame()
 
 def create_theme_count_chart(data_processor, current_theme=None):
     """
-    升级版：支持单一年份和跨年份(All)的 Cluster 对比图
+    Upgraded: Support single-year and multi-year (All) Cluster comparison charts
     """
     import plotly.graph_objects as go
     selected_year = st.session_state.get('selected_year', 'All')
     
-    # 统一获取配色[cite: 11]
+    # Get unified color palette
     colors = style_manager.get_chart_colors() if STYLES_AVAILABLE else STANDARD_COLORS
     
-    # --- 情况 A：单一年份 (维持原状，但增加透明度高亮当前主题) ---
+    # --- Case A: Single year (maintain original state, but add transparency to highlight current theme) ---
     if selected_year != 'All':
-        # 获取单年统计数据
+        # Get single-year statistics
         works_count_data = data_processor.get_works_count_data()
         if not works_count_data:
             return None
@@ -715,9 +749,9 @@ def create_theme_count_chart(data_processor, current_theme=None):
             unique_users.append(val['unique_users'])
             total_works.append(val['valid_works'])
             
-            # 透明度处理：如果是在专项页面，高亮显示该页面的柱子[cite: 16]
+            # Transparency handling: highlight the columns for the specific theme page
             if current_theme and q != current_theme:
-                # 转换为 rgba 格式实现透明感[cite: 16]
+                # Convert to rgba format to achieve transparency effect
                 c1, c2 = colors[0], colors[1]
                 user_colors.append(f"rgba({int(c1[1:3],16)}, {int(c1[3:5],16)}, {int(c1[5:7],16)}, 0.3)")
                 work_colors.append(f"rgba({int(c2[1:3],16)}, {int(c2[3:5],16)}, {int(c2[5:7],16)}, 0.3)")
@@ -731,9 +765,9 @@ def create_theme_count_chart(data_processor, current_theme=None):
         
         chart_title = 'Number of Outputs Delivered by Cluster'
 
-    # --- 情况 B：选择 ALL (跨年份对比大 Boss) ---
+    # --- Case B: ALL selected (Multi-year comparison Boss) ---
     else:
-        # 使用我们在 DataProcessor 中新增的方法获取多年数据
+        # Get multi-year data using the newly added method in DataProcessor
         df = data_processor.get_all_years_theme_counts()
         if df.empty:
             return None
@@ -751,8 +785,8 @@ def create_theme_count_chart(data_processor, current_theme=None):
         for i, cluster in enumerate(clusters):
             cluster_df = df[df['Cluster'] == cluster].sort_values(year_col)
             
-            # 使用同色系：Staff 用浅色 (透明度0.4)，Outputs 用深色 (不透明)
-            # 这样一组(一类颜色)就代表一个 Cluster 随年份的变化趋势
+            # Use same color palette: Staff uses light color (opacity 0.4), Outputs use dark color (opaque)
+            # This way, one group (one color type) represents the trend of a Cluster over the years
             fig.add_trace(go.Bar(
                 name=f"{cluster} (Staff)",
                 x=cluster_df[year_col],
@@ -771,10 +805,10 @@ def create_theme_count_chart(data_processor, current_theme=None):
             
         chart_title = 'Annual Progress Comparison by Cluster (2024-2030)'
 
-    # --- 通用布局设置 (统一应用你的全局样式) ---
+    # --- General layout settings (uniformly apply your global styles) ---
     layout_config = style_manager.get_global_chart_config('layout').copy() if STYLES_AVAILABLE else {}
     
-    # 特别处理换行和间距
+    # Special handling for line breaks and spacing
     fig.update_layout(
         title={'text': chart_title, 'x': 0.5, 'xanchor': 'center'},
         barmode='group',
@@ -894,8 +928,8 @@ def create_theme_detail_list(data_processor, question):
                 hovertemplate='<b>%{y}</b><br>Count: %{x}<extra></extra>'
             ))
             fig.update_layout(
-                xaxis_title='',  # 删除X轴标签
-                yaxis_title=''   # 删除Y轴标签
+                xaxis_title='',  # Remove X-axis title
+                yaxis_title=''   # Remove Y-axis title
             )
         else:  # bar chart
             fig.add_trace(go.Bar(
@@ -905,8 +939,8 @@ def create_theme_detail_list(data_processor, question):
                 hovertemplate='<b>%{x}</b><br>Count: %{y}<extra></extra>'
             ))
             fig.update_layout(
-                xaxis_title='',  # 删除X轴标签
-                yaxis_title=''   # 删除Y轴标签
+                xaxis_title='',  # Remove X-axis title
+                yaxis_title=''   # Remove Y-axis title
             )
         
         fig.update_layout(
@@ -920,7 +954,7 @@ def create_theme_detail_list(data_processor, question):
             font_family="'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         )
         
-        # 为饼图添加居中配置
+        # Add center alignment configuration for pie charts
         if chart_type == 'pie':
             fig.update_layout(
                 legend=dict(
@@ -1343,7 +1377,7 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
         if has_frequency_data:
             selected_year = st.session_state.get('selected_year', 'All')
             
-            # 定义哪些特定的图表在选 All 时需要变成折线图
+            # Define which specific charts need to turn into line charts when All is selected
             line_chart_targets = [
                 'Types Of Knowledge Development And Dissemination Outputs Delivered',
                 'Types Of Advocacy Or Partnership Outputs',
@@ -1352,18 +1386,18 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
             
             for field_name, chart_type, chart_title in theme_info['charts']:
                 
-                # ---------------- 智能拦截逻辑 ----------------
+                # ---------------- Smart Interception Logic ----------------
                 if selected_year == 'All' and chart_type == 'pie':
-                    # 1. 饼图 -> 100% 堆叠柱状图
+                    # 1. Pie chart -> 100% stacked bar chart
                     field_data = data_processor.get_time_series_distribution(question, field_name)
                     preserve_order = False
                     
                 elif selected_year == 'All' and chart_title in line_chart_targets:
-                    # 2. 特定的柱状图 -> 多折线图
+                    # 2. Specific bar charts -> Multi-line chart
                     field_data = data_processor.get_time_series_distribution(question, field_name)
-                    chart_type = 'line'  # 通知底层画折线
+                    chart_type = 'line'  # Notify the base layer to draw lines
                     
-                    # 针对 Q11 合作模式的自定义排序处理（二维字典版）
+                    # Custom sorting processing for Q11 partnership types (2D dictionary version)
                     if question == 'Q11' and 'Type of partnership' in field_name:
                         custom_order = [
                             'multistakeholder initiative', 'bilateral partnership',
@@ -1383,7 +1417,7 @@ The ILO promotes **knowledge exchange**, **institutional strengthening**, and **
                         preserve_order = False
 
                 else:
-                    # 3. 普通的 1D 数据处理（单一年份图表 或 维持原状的其它柱图）
+                    # 3. Normal 1D data processing (single-year chart or other bar charts to maintain as is)
                     field_data = data_processor.get_field_distribution(question, field_name)
                     
                     if field_data:

@@ -5,10 +5,10 @@ from typing import Dict, Any, List, Optional
 import pandas as pd
 
 class StreamlitStyleManager:
-    """Streamlit样式管理器 - 简化版本"""
+    """Streamlit Style Manager - Simplified Version"""
     
     def __init__(self):
-        """初始化样式管理器"""
+        """Initialize style manager"""
         self.theme_colors = {
             'primary': '#1E2DBE',
             'secondary': '#FA3C4B', 
@@ -37,8 +37,8 @@ class StreamlitStyleManager:
                         'size': 16,
                         'color': '#1f1f1f'
                     },
-                    'x': 0.5,  # 标题居中
-                    'xanchor': 'center',  # 标题锚点居中
+                    'x': 0.5,  # Center title
+                    'xanchor': 'center',  # Center title anchor
                     'pad': {'b': 10}
                 },
                 'paper_bgcolor': 'rgba(0,0,0,0)',
@@ -48,32 +48,32 @@ class StreamlitStyleManager:
         }
     
     def get_theme_colors(self) -> Dict[str, str]:
-        """获取主题颜色"""
+        """Get theme colors"""
         return self.theme_colors
     
     def get_chart_colors(self) -> List[str]:
-        """获取图表颜色"""
+        """Get chart colors"""
         return self.chart_colors
     
     def get_global_chart_config(self, chart_type: str = None) -> dict:
-        """获取全局图表配置"""
+        """Get global chart configuration"""
         if chart_type and chart_type in self.global_chart_config:
             return self.global_chart_config[chart_type]
         return self.global_chart_config
     
     def apply_custom_css(self):
-        """应用自定义CSS样式 - 简化版本"""
+        """Apply custom CSS styles - Simplified Version"""
         st.markdown(f"""
         <style>
-        /* 导入Google Fonts */
+        /* Import Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Sans:wght@400;700&display=swap');
         
-        /* 全局字体设置 */
+        /* Global font settings */
         .stApp {{
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }}
 
-        /* 正文字体工具类与通用应用 */
+        /* Body font utility classes and generic applications */
         .yeap-body-text, .yeap-body-text p, .yeap-body-text li, .yeap-body-text span {{
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
             font-size: 15px;
@@ -81,7 +81,7 @@ class StreamlitStyleManager:
             color: #333333;
         }}
 
-        /* 默认 Markdown 正文字体同步（与 yeap-body-text 保持一致） */
+        /* Default Markdown body font synchronization (consistent with yeap-body-text) */
         .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span, .markdown-text-container {{
             font-family: 'Noto Sans', 'Noto Sans SC', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
             font-size: 15px;
@@ -89,11 +89,11 @@ class StreamlitStyleManager:
             color: #333333;
         }}
 
-        /* 取消正文加粗样式 */
+        /* Cancel bold style for body text */
         .yeap-body-text b, .yeap-body-text strong {{ font-weight: 400 !important; }}
         .stMarkdown b, .stMarkdown strong, .markdown-text-container b, .markdown-text-container strong {{ font-weight: 400 !important; }}
 
-        /* 根变量 */
+        /* Root variables */
         :root {{
             --primary-color: {self.theme_colors['primary']};
             --secondary-color: {self.theme_colors['secondary']};
@@ -104,20 +104,20 @@ class StreamlitStyleManager:
             --dark-color: {self.theme_colors['dark']};
         }}
         
-        /* 主容器样式 */
+        /* Main container styles */
         .main .block-container {{
-            padding-top: 0rem; /* 去掉顶部内边距，确保切页后完全贴顶 */
+            padding-top: 0rem; /* Remove top padding to ensure flush top after page switch */
             padding-bottom: 2rem;
             max-width: 1200px;
         }}
         
-        /* 标题样式 */
+        /* Title styles */
         h1, h2, h3, h4, h5, h6 {{
             font-weight: 600;
             color: #1f1f1f;
         }}
         
-        /* 表格样式 */
+        /* Table styles */
         .dataframe {{
             font-size: 12px;
             border-collapse: collapse;
@@ -136,7 +136,7 @@ class StreamlitStyleManager:
             border: 1px solid #dee2e6;
         }}
         
-        /* 指标卡片样式 */
+        /* Metric card styles */
         .metric-card {{
             background: white;
             padding: 1.5rem;
@@ -145,7 +145,7 @@ class StreamlitStyleManager:
             border-left: 4px solid var(--primary-color);
         }}
         
-        /* 图表容器样式 */
+        /* Chart container styles */
         .chart-container {{
             background: white;
             padding: 1rem;
@@ -158,7 +158,7 @@ class StreamlitStyleManager:
     
     def create_metric_card(self, title: str, value: str, delta: str = None, 
                           delta_color: str = "normal") -> str:
-        """创建指标卡片"""
+        """Create metric card"""
         delta_html = ""
         if delta:
             color = self.theme_colors.get('success' if delta_color == 'normal' else delta_color, '#666')
@@ -173,7 +173,7 @@ class StreamlitStyleManager:
         """
     
     def create_data_table(self, df: pd.DataFrame, title: str = None) -> str:
-        """创建数据表格"""
+        """Create data table"""
         title_html = f'<h3 style="margin-bottom: 1rem;">{title}</h3>' if title else ""
         
         return f"""
@@ -186,15 +186,15 @@ class StreamlitStyleManager:
     def create_horizontal_bar_chart(self, df: pd.DataFrame, x_col: str, y_col: str, 
                                    title: str = None, color_col: str = None,
                                    max_label_length: int = 20) -> go.Figure:
-        """创建水平条形图"""
-        # 处理标签长度
+        """Create horizontal bar chart"""
+        # Handle label length
         if max_label_length and len(df) > 0:
             df = df.copy()
             df[y_col] = df[y_col].astype(str).apply(
                 lambda x: x[:max_label_length] + '...' if len(x) > max_label_length else x
             )
         
-        # 创建图表
+        # Create chart
         if color_col and color_col in df.columns:
             fig = px.bar(df, x=x_col, y=y_col, color=color_col,
                         orientation='h', title=title,
@@ -203,17 +203,17 @@ class StreamlitStyleManager:
             fig = px.bar(df, x=x_col, y=y_col, orientation='h', title=title,
                         color_discrete_sequence=[self.chart_colors[0]])
         
-        # 应用全局配置
+        # Apply global configuration
         fig.update_layout(self.global_chart_config['layout'])
         
         return fig
 
     def create_plotly_theme(self) -> dict:
-        """提供与可视化层兼容的主题结构"""
+        """Provide theme structure compatible with visualization layer"""
         return {'layout': self.global_chart_config['layout']}
 
     def _wrap_title(self, title: str, max_chars: int = 120) -> str:
-        """换行长标题以避免溢出"""
+        """Wrap long titles to prevent overflow"""
         if not title:
             return ''
         parts = []
@@ -229,21 +229,21 @@ class StreamlitStyleManager:
         return '<br>'.join(parts)
 
     def _to_title_case(self, s: str) -> str:
-        """将标签文本首字母大写（保留短大写缩写，如 ILO、UN）。"""
+        """Capitalize the first letter of label text (preserve short acronyms like ILO, UN)."""
         if s is None:
             return ''
         s = str(s)
         def _cap_word(w: str) -> str:
-            # 保留全大写且较短的缩写
+            # Preserve fully capitalized and short acronyms
             if w.isupper() and len(w) <= 5:
                 return w
-            # 处理连字符词
+            # Process hyphenated words
             return '-'.join(sub.capitalize() if sub else '' for sub in w.split('-'))
         return ' '.join(_cap_word(part) for part in s.split())
 
-    # 自定义：固定宽度纵向图例（使用注释模拟）
+    # Custom: Fixed-width vertical legend (simulated using annotations)
     def _wrap_legend_text(self, text: str, max_chars: int = 18) -> str:
-        """按字符数进行简单换行，返回带<br>的文本"""
+        """Simple line wrap by character count, returns text with <br>"""
         words = str(text).split()
         lines = []
         current = ''
@@ -262,19 +262,19 @@ class StreamlitStyleManager:
                                         x: float = 0.88, y: float = 1.0, max_chars: int = 18,
                                         font_size: int = 12, row_gap: float = 0.06, draw_box: bool = False) -> None:
         """
-        在图右侧添加自定义纵向图例：
-        - 固定文本宽度，超过部分自动换行
-        - 彻底抛弃几何 shape，使用文本字符(■)渲染色块，保证 100% 垂直对齐，永不变形拉伸
+        Add custom vertical legend to the right of the chart:
+        - Fixed text width, wraps automatically when exceeded
+        - Completely abandon geometric shapes, use the text character (■) to render color blocks, ensuring 100% vertical alignment and preventing deformation stretching
         """
         wrapped_labels = [self._wrap_legend_text(lbl, max_chars=max_chars) for lbl in labels]
         total_lines = sum(wl.count('<br>') + 1 for wl in wrapped_labels)
 
         y_cursor = y
         x_text = x
-        symbol_x = x_text - 0.025  # 色块放在文字左侧
+        symbol_x = x_text - 0.025  # Place color block to the left of the text
         
         for idx, wrapped in enumerate(wrapped_labels):
-            # 1. 文本注释
+            # 1. Text annotation
             fig.add_annotation(
                 xref='paper', yref='paper',
                 x=x_text, y=y_cursor,
@@ -286,9 +286,9 @@ class StreamlitStyleManager:
                 font=dict(size=font_size, color='#333'),
             )
             
-            # 2. 色块注释 (🌟核心修复：直接使用 ■ 字符作为注释)
-            # 因为它也是文字，和旁边的文字共享同一个坐标点(y_cursor)和锚点(top)
-            # 渲染引擎会把它们放在同一条基准线上，精准对齐第一行！
+            # 2. Color block annotation (🌟 Core fix: Directly use the ■ character as an annotation)
+            # Because it is also text, it shares the same coordinate point (y_cursor) and anchor (top) with the text next to it
+            # The rendering engine will place them on the same baseline, precisely aligning with the first line!
             fig.add_annotation(
                 xref='paper', yref='paper',
                 x=symbol_x, y=y_cursor,
@@ -297,10 +297,10 @@ class StreamlitStyleManager:
                 align='left',
                 xanchor='left',
                 yanchor='top',
-                font=dict(size=font_size + 2, color=colors[idx % len(colors)]), # 稍微调大一点点字体，让方块更饱满
+                font=dict(size=font_size + 2, color=colors[idx % len(colors)]), # Slightly increase the font size to make the block fuller
             )
             
-            # 3. 游标下移
+            # 3. Move cursor down
             lines = wrapped.count('<br>') + 1
             y_cursor -= row_gap + (lines - 1) * (row_gap * 0.75)
 
@@ -317,8 +317,8 @@ class StreamlitStyleManager:
             )
 
     def create_standardized_chart(self, data, chart_type: str, title: str, preserve_order: bool = False) -> go.Figure:
-        """标准化图表创建，统一样式，支持 pie/bar/horizontal_bar，对区域图表使用渐变色"""
-        # 支持 Series 或 dict
+        """Standardized chart creation, unified style, supports pie/bar/horizontal_bar, uses gradients for regional charts"""
+        # Support Series or dict
         if isinstance(data, pd.Series):
             series = data.dropna()
             data_dict = series.to_dict()
@@ -327,31 +327,31 @@ class StreamlitStyleManager:
         else:
             data_dict = {}
         
-        # 排序（除非要求保留原始顺序）
+        # Sort (unless preserving original order is requested)
         if not preserve_order and chart_type in ['bar', 'horizontal_bar']:
             data_dict = dict(sorted(data_dict.items(), key=lambda x: x[1], reverse=True))
         
         labels = [self._to_title_case(lbl) for lbl in list(data_dict.keys())]
         values = list(data_dict.values())
         
-        # 检查是否为区域相关图表、Partnership类型图表或频次分析图表，使用渐变色
+        # Check if it is a region-related, Partnership-type, or frequency analysis chart; use gradient colors
         is_region_chart = any(keyword in title.lower() for keyword in ['region', 'regions', 'across regions'])
         is_partnership_chart = any(keyword in title.lower() for keyword in ['partnership', 'advocacy'])
         is_frequency_chart = any(keyword in title.lower() for keyword in ['types of', 'outputs delivered', 'frequency', 'distribution'])
         
         if (is_region_chart or is_partnership_chart or is_frequency_chart) and chart_type == 'bar':
-            # 使用渐变色配色方案
+            # Use gradient color scheme
             gradient_colors_hex = [
-                '#BEDCfa',  # rgb(190, 220, 250) - 最浅
+                '#BEDCfa',  # rgb(190, 220, 250) - lightest
                 '#82AFDC',  # rgb(130, 175, 220)
                 '#5A87CD',  # rgb(90, 135, 205)
                 '#3264C8',  # rgb(50, 100, 200)
-                '#1E2DBE',  # rgb(30, 45, 190) - ILO BLUE (主色)
+                '#1E2DBE',  # rgb(30, 45, 190) - ILO BLUE (main color)
                 '#151F85',  # rgb(21, 31, 133)
-                '#230050'   # rgb(35, 0, 80) - 最深
+                '#230050'   # rgb(35, 0, 80) - darkest
             ]
             
-            # 根据数值大小分配颜色（数值越大颜色越深）
+            # Allocate color based on value (larger value = darker color)
             if values:
                 max_val = max(values)
                 min_val = min(values)
@@ -359,7 +359,7 @@ class StreamlitStyleManager:
                 
                 colors = []
                 for val in values:
-                    # 计算颜色索引（数值越大索引越大，颜色越深）
+                    # Calculate color index (larger value = larger index, darker color)
                     normalized_val = (val - min_val) / val_range
                     color_idx = int(normalized_val * (len(gradient_colors_hex) - 1))
                     colors.append(gradient_colors_hex[color_idx])
@@ -373,11 +373,11 @@ class StreamlitStyleManager:
                 text=values,
                 textposition='auto',
                 hovertemplate='%{x}<br>%{y}<extra></extra>',
-                width=0.6,  # 调整柱子宽度，使其更细
-                showlegend=False  # 确保柱状图不显示图例
+                width=0.6,  # Adjust column width to make it thinner
+                showlegend=False  # Ensure the bar chart does not show a legend
             )])
             
-            # 添加渐变色图例条（优化显示效果）
+            # Add gradient legend bar (optimize display effect)
             fig.add_trace(go.Scatter(
                 x=[None], y=[None],
                 mode='markers',
@@ -387,7 +387,7 @@ class StreamlitStyleManager:
                     cmin=min_val if values else 0,
                     cmax=max_val if values else 1,
                     colorbar=dict(
-                        title={'text': ''},  # 彻底移除标题，避免 trace 0
+                        title={'text': ''},  # Completely remove the title to avoid trace 0
                         x=1.02,
                         len=0.8,
                         thickness=15,
@@ -399,11 +399,11 @@ class StreamlitStyleManager:
                     )
                 ),
                 showlegend=False,
-                name=' ',  # 防止 Plotly 回退到 trace 0
+                name=' ',  # Prevent Plotly from falling back to trace 0
                 hoverinfo='skip'
             ))
         else:
-            # 使用标准颜色
+            # Use standard colors
             colors = self.get_chart_colors()
             
             if chart_type == 'pie':
@@ -412,13 +412,13 @@ class StreamlitStyleManager:
                     values=values,
                     marker_colors=colors[:len(labels)]
                 )])
-                # 禁用内置图例，改用自定义纵向固定宽度图例
+                # Disable built-in legend, use custom vertical fixed-width legend instead
                 fig.update_layout(
                     margin=dict(l=20, r=180, t=60, b=20),
                     autosize=True,
                     showlegend=False
                 )
-                # 添加自定义图例（固定宽度，文本可换行，逐行显示）
+                # Add custom legend (fixed width, word wrap, row by row display)
                 self.add_fixed_width_vertical_legend(
                     fig,
                     labels=labels,
@@ -451,13 +451,13 @@ class StreamlitStyleManager:
                     hovertemplate='%{x}<br>%{y}<extra></extra>'
                 )])
         
-        # 应用统一布局和标题换行
+        # Apply uniform layout and title wrapping
         layout_config = self.get_global_chart_config('layout').copy()
         title_config = layout_config.get('title', {}).copy()
         title_config['text'] = self._wrap_title(title)
         layout_config['title'] = title_config
         fig.update_layout(**layout_config)
-        # 统一悬停标签样式，确保与全局字体保持一致
+        # Unify hover label style, ensure consistency with global font
         fig.update_layout(hoverlabel=dict(
             bgcolor='white',
             bordercolor='#dee2e6',
@@ -472,9 +472,9 @@ class StreamlitStyleManager:
     
     def create_smart_chart(self, data, chart_type: str, title: str, preserve_order: bool = False) -> go.Figure:
         """
-        智能通用图表函数：
-        - 如果 data 是 1D (单一年份)，按 chart_type 画正常图表
-        - 如果 data 是 2D (嵌套字典，代表 All 年份)，自动画 100% 堆叠图 或 多折线图
+        Smart generic chart function:
+        - If data is 1D (single year), draw normal chart according to chart_type
+        - If data is 2D (nested dictionary, representing 'All' years), automatically draw 100% stacked chart or multi-line chart
         """
         import pandas as pd
         import plotly.graph_objects as go
@@ -495,19 +495,19 @@ class StreamlitStyleManager:
         if not is_2d:
             return self.create_standardized_chart(data_dict, chart_type, title, preserve_order)
             
-        # ---------------- ALL 年份：自动生成通用 2D 图表 ----------------
+        # ---------------- ALL Years: Automatically generate generic 2D charts ----------------
         df = pd.DataFrame(data_dict).T.fillna(0)
         df.index.name = 'Year'
         df.sort_index(inplace=True)
         
-        # 强制保留列的顺序 (应对例如 Q11 合作模式的自定义排序需求)
+        # Force preserve column order (to handle custom sorting requirements like Q11 partnership types)
         if preserve_order and data_dict:
             ordered_cols = []
             for y in data_dict:
                 for col in data_dict[y]:
                     if col not in ordered_cols:
                         ordered_cols.append(col)
-            # 把不在排序列表中的其它列附加在后面
+            # Append other columns not in the sorting list to the end
             for col in df.columns:
                 if col not in ordered_cols:
                     ordered_cols.append(col)
@@ -522,7 +522,7 @@ class StreamlitStyleManager:
         layout_config['title'] = title_config
         layout_config['margin'] = dict(t=80, b=80, l=40, r=40)
         
-        # 🌟 分支 1：画多折线图 (Multi-Line Chart)
+        # 🌟 Branch 1: Draw Multi-Line Chart
         if chart_type == 'line':
             for i, option in enumerate(df.columns):
                 display_name = self._to_title_case(str(option))
@@ -530,9 +530,9 @@ class StreamlitStyleManager:
                     name=display_name,
                     x=df.index,
                     y=df[option],
-                    mode='lines+markers',     # 点+线
-                    marker=dict(size=8),      # 圆点大小
-                    line=dict(width=3),       # 线条粗细
+                    mode='lines+markers',     # Points + lines
+                    marker=dict(size=8),      # Dot size
+                    line=dict(width=3),       # Line thickness
                     marker_color=colors[i % len(colors)],
                     hovertemplate='<b>Year: %{x}</b><br>' + display_name + '<br>Count: %{y}<extra></extra>'
                 ))
@@ -544,7 +544,7 @@ class StreamlitStyleManager:
                 legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5)
             )
             
-        # 🌟 分支 2：画 100% 堆叠柱状图 (Stacked Bar Chart)
+        # 🌟 Branch 2: Draw 100% Stacked Bar Chart
         else:
             for i, option in enumerate(df.columns):
                 display_name = self._to_title_case(str(option))
@@ -568,25 +568,26 @@ class StreamlitStyleManager:
             )
             
         return fig
-# 全局样式管理器实例（供其他模块导入）
+
+# Global style manager instance (for import by other modules)
 style_manager = StreamlitStyleManager()
 
-# 兼容页面样式应用函数（供其他模块导入）
+# Compatible page style application function (for import by other modules)
 def apply_page_style():
     try:
         style_manager.apply_custom_css()
     except Exception:
         pass
 
-# 兼容的标准化图表函数（供其他模块导入）
+# Compatible standardized chart function (for import by other modules)
 def create_standardized_chart(data, chart_type: str, title: str, preserve_order: bool = False) -> go.Figure:
     return style_manager.create_standardized_chart(data, chart_type, title, preserve_order=preserve_order)
 
-# 兼容的表格创建函数（供其他模块导入）
+# Compatible table creation function (for import by other modules)
 def create_table(df: pd.DataFrame, title: Optional[str] = None) -> str:
     return style_manager.create_data_table(df, title)
 
-# 兼容的指标卡片函数（供其他模块导入）
+# Compatible metric card function (for import by other modules)
 def create_metrics(metrics: List[Dict[str, Any]]) -> List[str]:
     cards = []
     for m in metrics or []:
@@ -595,16 +596,16 @@ def create_metrics(metrics: List[Dict[str, Any]]) -> List[str]:
         ))
     return cards
 
-# 兼容的统一图表创建入口（供其他模块导入）
-# 修改 st_styles.py 底部原本的 create_chart 函数
+# Compatible unified chart creation entry point (for import by other modules)
+# Modify the original create_chart function at the bottom of st_styles.py
 def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go.Figure:
     preserve_order = kwargs.get('preserve_order', False)
-    # 引导流量走新的智能图表函数
+    # Direct traffic to the new smart chart function
     return style_manager.create_smart_chart(data, chart_type, title, preserve_order=preserve_order)
 
-    # 自定义：固定宽度纵向图例（使用注释模拟）
+    # Custom: Fixed-width vertical legend (simulated using annotations)
     def _wrap_legend_text(self, text: str, max_chars: int) -> str:
-        """按字符数进行简单换行，返回带<br>的文本"""
+        """Simple line wrap by character count, returns text with <br>"""
         words = str(text).split()
         lines = []
         current = ''
@@ -623,17 +624,17 @@ def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go
                                         x: float = 1.02, y: float = 1.0, max_chars: int = 24,
                                         font_size: int = 12, row_gap: float = 0.05) -> None:
         """
-        在图右侧添加自定义纵向图例：
-        - 固定文本宽度（按字符数近似），超过部分自动换行
-        - 每个图例项单独一行，高度自适应
-        - 使用注释表示彩色方块和文本
+        Add custom vertical legend to the right of the chart:
+        - Fixed text width (approximate by character count), wraps automatically when exceeded
+        - Each legend item on a separate line, height adapts automatically
+        - Use annotations to represent colored blocks and text
         """
-        # 起始位置（paper坐标）
+        # Starting position (paper coordinates)
         y_cursor = y
-        symbol_x = x - 0.02  # 彩色方块靠左
+        symbol_x = x - 0.02  # Place color block to the left of the text
         for idx, label in enumerate(labels):
             wrapped = self._wrap_legend_text(label, max_chars=max_chars)
-            # 文本注释
+            # Text annotation
             fig.add_annotation(
                 xref='paper', yref='paper',
                 x=x, y=y_cursor,
@@ -644,7 +645,7 @@ def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go
                 yanchor='top',
                 font=dict(size=font_size, color='#333'),
             )
-            # 彩色方块（用文本块模拟 ■）
+            # Color block annotation (simulating ■ using text block)
             fig.add_annotation(
                 xref='paper', yref='paper',
                 x=symbol_x, y=y_cursor,
@@ -653,6 +654,6 @@ def create_chart(data, chart_type: str = 'bar', title: str = '', **kwargs) -> go
                 yanchor='top',
                 font=dict(size=font_size+4, color=colors[idx % len(colors)])
             )
-            # 根据行数下移游标
+            # Move cursor down based on the number of lines
             lines = wrapped.count('<br>') + 1
             y_cursor -= row_gap + (lines - 1) * (row_gap * 0.8)

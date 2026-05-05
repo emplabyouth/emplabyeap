@@ -29,19 +29,19 @@ except ImportError:
 
 def create_layout():
     """Main entry point for the Technical Assistance page"""
-    # 添加顶部锚点
+    # Add top anchor
     st.markdown('<div id="yeap-top-anchor"></div>', unsafe_allow_html=True)
     
-    # 强制页面置顶 - 使用多种方法确保成功
+    # Force page to top - use multiple methods to ensure success
     st.markdown("""
     <script>
     function forceScrollToTop() {
-        // 方法1: 标准滚动
+        // Method 1: Standard scroll
         window.scrollTo({top: 0, behavior: 'instant'});
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
         
-        // 方法2: 查找并滚动所有可能的容器
+        // Method 2: Find and scroll all possible containers
         const selectors = [
             'main', '.main', '.stApp', 
             '[data-testid="stAppViewContainer"]',
@@ -59,13 +59,13 @@ def create_layout():
             });
         });
         
-        // 方法3: 滚动到锚点
+        // Method 3: Scroll to anchor
         const anchor = document.getElementById('yeap-top-anchor');
         if (anchor) {
             anchor.scrollIntoView({behavior: 'instant', block: 'start'});
         }
         
-        // 方法4: 强制重置所有滚动位置
+        // Method 4: Force reset all scroll positions
         const allElements = document.querySelectorAll('*');
         allElements.forEach(element => {
             if (element.scrollTop > 0) {
@@ -77,16 +77,16 @@ def create_layout():
         });
     }
     
-    // 立即执行
+    // Execute immediately
     forceScrollToTop();
     
-    // 延迟执行多次，确保页面完全加载后也能置顶
+    // Delay execution multiple times to ensure page scrolls to top after full load
     setTimeout(forceScrollToTop, 50);
     setTimeout(forceScrollToTop, 100);
     setTimeout(forceScrollToTop, 200);
     setTimeout(forceScrollToTop, 500);
     
-    // 监听页面变化
+    // Listen for page changes
     if (window.MutationObserver) {
         const observer = new MutationObserver(function(mutations) {
             let shouldScroll = false;
@@ -105,13 +105,13 @@ def create_layout():
             subtree: true
         });
         
-        // 5秒后停止观察
+        // Stop observing after 5 seconds
         setTimeout(() => observer.disconnect(), 5000);
     }
     </script>
     """, unsafe_allow_html=True)
     
-    # 使用 Streamlit 的 empty 组件强制重新渲染
+    # Use Streamlit's empty component to force re-render
     if '_scroll_to_top' not in st.session_state:
         st.session_state['_scroll_to_top'] = True
     
@@ -226,28 +226,28 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
             break
     
     if has_frequency_data:
-        # 获取当前选中的年份
+        # Get currently selected year
         selected_year = st.session_state.get('selected_year', 'All')
         
-        # 定义哪些特定的图表在选 All 时需要变成折线图
+        # Define which specific charts need to turn into line charts when All is selected
         line_chart_targets = [
             'Technical Assistance Outputs Across Regions'
         ]
         
         for field_name, chart_type, chart_title in theme_charts:
             
-            # ---------------- 智能拦截逻辑 ----------------
+            # ---------------- Smart Interception Logic ----------------
             if selected_year == 'All' and chart_type == 'pie':
-                # 1. 饼图 -> 100% 堆叠柱状图
+                # 1. Pie chart -> 100% stacked bar chart
                 field_data = data_processor.get_time_series_distribution('Q7', field_name)
                 preserve_order = False
                 
             elif selected_year == 'All' and chart_title in line_chart_targets:
-                # 2. 特定的柱状图 -> 多折线图
+                # 2. Specific bar charts -> Multi-line chart
                 field_data = data_processor.get_time_series_distribution('Q7', field_name)
-                chart_type = 'line'  # 通知底层画折线[cite: 16]
+                chart_type = 'line'  # Notify the base layer to draw lines
                 
-                # 折线图中的 Top 10 计算（跨年份总和）[cite: 16]
+                # Top 10 calculation in line chart (cross-year sum)
                 if 'Region' in chart_title or 'Regions' in chart_title:
                     region_totals = {}
                     for y, cats in field_data.items():
@@ -258,21 +258,21 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
                 preserve_order = False
                 
             else:
-                # 3. 否则走原本的 1D 数据提取逻辑
+                # 3. Otherwise, use the original 1D data extraction logic
                 field_data = data_processor.get_field_distribution('Q7', field_name)
                 if field_data:
-                    # 处理 Top 10 Region[cite: 13]
+                    # Handle Top 10 Regions
                     if 'Region' in chart_title or 'Regions' in chart_title:
                         field_data = dict(sorted(field_data.items(), key=lambda x: x[1], reverse=True)[:10])
                 preserve_order = False
             # ----------------------------------------------
 
             if field_data:
-                # Use the same chart creation function as the original file[cite: 13]
+                # Use the same chart creation function as the original file
                 if CHART_FUNCTION_AVAILABLE:
                     fig = create_chart(field_data, chart_type, chart_title, preserve_order=preserve_order)
                 else:
-                    # Fallback to basic chart creation[cite: 13]
+                    # Fallback to basic chart creation
                     if chart_type == 'pie':
                         df = pd.DataFrame(list(field_data.items()), columns=['Category', 'Count'])
                         fig = px.pie(
@@ -295,11 +295,11 @@ def create_technical_assistance_layout(data_processor=None, filtered_user_ids=No
                             color_continuous_scale='Blues'  
                         )
                     else:
-                        fig = None # 避免未定义错误
+                        fig = None # Avoid undefined error
                 
                 if fig:
                     fig.update_layout(height=500)
-                    # 使用新的 width='stretch' 规范[cite: 13]
+                    # Use the new width='stretch' specification
                     st.plotly_chart(fig, width='stretch')
     else:
         st.info("No frequency analysis data available for Technical Assistance")

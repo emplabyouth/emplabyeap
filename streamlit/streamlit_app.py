@@ -32,7 +32,7 @@ def safe_read_csv(file_path):
         except UnicodeDecodeError:
             continue
     
-    # If all encodings fail, try without specifying  encoding
+    # If all encodings fail, try without specifying encoding
     try:
         return pd.read_csv(file_path)
     except Exception as e:
@@ -40,7 +40,7 @@ def safe_read_csv(file_path):
         return pd.DataFrame()
 
 
-# add custom css style, set title color to light gray
+# Add custom css style, set title color to light gray
 # Remove old global main title to declutter header area
 
 # Apply global styles as early as possible so sidebar filters also get CSS
@@ -61,17 +61,17 @@ PAGES = {
 st.sidebar.title("Navigation")
 
 def _on_page_change():
-    # 设置页面重置标记
+    # Set page reset flag
     st.session_state['_page_reset_requested'] = True
     
-    # 设置滚动到顶部标记 - 所有页面切换都需要滚动到顶部
+    # Set scroll to top flag - all page switches need to scroll to top
     st.session_state['_scroll_to_top'] = True
     
-    # 对于使用相同模块的页面间切换，强制清除更多状态
+    # For switching between pages using the same module, force clear more states
     current_selection = st.session_state.get('page_selection', '')
     previous_selection = st.session_state.get('_previous_page_selection', '')
     
-    # 检查是否是在使用相同模块的页面间切换
+    # Check if switching between pages that use the same module
     same_module_pages = [
         "📚 Knowledge Development & Dissemination",
         "🔧 Technical Assistance", 
@@ -80,42 +80,42 @@ def _on_page_change():
     ]
     
     if current_selection in same_module_pages and previous_selection in same_module_pages:
-        # 强制清除所有相关状态，确保完全重新初始化
+        # Force clear all relevant states to ensure complete re-initialization
         st.session_state['_force_full_reset'] = True
     
-    # 记录当前页面选择
+    # Record current page selection
     st.session_state['_previous_page_selection'] = current_selection
 
 selection = st.sidebar.radio("Go to", list(PAGES.keys()), key="page_selection", on_change=_on_page_change)
 
-# 处理页面重置请求
+# Process page reset requests
 if st.session_state.get('_page_reset_requested', False):
-    # 清除所有页面相关的session state，强制重新初始化
+    # Clear all page-related session states, force re-initialization
     keys_to_clear = []
     for key in st.session_state.keys():
-        # 保留全局设置，清除页面特定的状态
+        # Keep global settings, clear page-specific states
         if not key.startswith('selected_year') and not key.startswith('selected_region') and not key.startswith('year_options') and not key.startswith('regions_options'):
-            # 对于强制完全重置的情况，清除更多状态
+            # For cases requiring a forced full reset, clear more states
             if st.session_state.get('_force_full_reset', False):
                 if key not in ['page_selection', '_page_reset_requested', '_force_full_reset', '_previous_page_selection']:
                     keys_to_clear.append(key)
             else:
-                # 始终清除分页相关的状态，确保滚动重置正常工作
+                # Always clear pagination-related states to ensure scroll reset works properly
                 if key not in ['page_selection', '_page_reset_requested', '_previous_page_selection'] or key.startswith('outputs_current_page_'):
                     keys_to_clear.append(key)
     
     for key in keys_to_clear:
         del st.session_state[key]
     
-    # 设置滚动到顶部标记
+    # Set scroll to top flag
     st.session_state['_scroll_to_top'] = True
     
-    # 清除重置标记
+    # Clear reset flag
     st.session_state['_page_reset_requested'] = False
     if '_force_full_reset' in st.session_state:
         del st.session_state['_force_full_reset']
     
-    # 强制重新运行
+    # Force rerun
     st.rerun()
 
 page = PAGES[selection]
@@ -164,10 +164,10 @@ try:
 
     st.sidebar.header("Filters")
     
-    # ================= 终极防弹版：分离组件状态与全局状态 =================
+    # ================= Ultimate Bulletproof Version: Separate Component State from Global State =================
 
-    # 1. 初始化一个真正安全的“幕后”全局变量
-    # (注意：变量名必须以 selected_year 开头，才能躲过您代码里的 _on_page_change 清理逻辑)
+    # 1. Initialize a truly safe "behind-the-scenes" global variable
+    # (Note: The variable name must start with selected_year to evade the cleanup logic in your _on_page_change)
     if 'selected_year_safe' not in st.session_state:
         if '2025' in year_options:
             st.session_state['selected_year_safe'] = '2025'
@@ -178,18 +178,18 @@ try:
         else:
             st.session_state['selected_year_safe'] = 'All'
 
-    # 2. 兜底保护：防止数据文件切换导致选项不存在
+    # 2. Fallback protection: Prevent the option from not existing due to switching data files
     if st.session_state['selected_year_safe'] not in year_options:
         st.session_state['selected_year_safe'] = 'All'
 
-    # 3. 动态计算安全的 index
+    # 3. Dynamically calculate the safe index
     safe_index = year_options.index(st.session_state['selected_year_safe'])
 
-    # 4. 定义回调函数：只有当用户【手动点击】下拉框时，才更新幕后变量
+    # 4. Define callback function: Only update the behind-the-scenes variable when the user [manually clicks] the dropdown
     def sync_year():
         st.session_state['selected_year_safe'] = st.session_state['selected_year_widget']
 
-    # 5. 渲染下拉框：用安全的 index 锚定它，用回调函数捕获变化
+    # 5. Render dropdown: Anchor it using the safe index, use callback to capture changes
     selected_year = st.sidebar.selectbox(
         "Select Period",
         year_options,
@@ -198,7 +198,7 @@ try:
         on_change=sync_year
     )
 
-    # 6. 把最终选定的年份暴露给所有子页面使用 (维持原有的变量名)
+    # 6. Expose the finally selected year to all subpages (maintaining the original variable name)
     st.session_state['selected_year'] = st.session_state['selected_year_safe']
     # =================================================================
     # Expose to pages
@@ -400,7 +400,7 @@ try:
 except Exception:
     pass
 
-# 页面渲染完成后滚动到顶部（统一处理所有页面）
+# Scroll to top after page rendering completes (handle uniformly for all pages)
 if st.session_state.get('_scroll_to_top', False):
     import streamlit.components.v1 as components
     components.html(
@@ -447,7 +447,7 @@ if st.session_state.get('_scroll_to_top', False):
     st.session_state['_scroll_to_top'] = False
 
 
-# 兜底：始终确保页面容器在每次运行后回到顶部（非侵入性）
+# Fallback: Always ensure page container returns to top after each run (non-intrusive)
 st.markdown(
     """
     <script>

@@ -4,7 +4,7 @@ import base64
 import pandas as pd
 import plotly.graph_objects as go
 
-# Try to apply unified  page  style if available
+# Try to apply unified page style if available
 try:
     from st_styles import apply_page_style, create_chart
     STYLES_AVAILABLE = True
@@ -43,13 +43,13 @@ def get_q2_data():
             df = safe_read_csv(csv_path)
             selected_year = st.session_state.get('selected_year', 'All')
             
-            # 找出年份列
+            # Find the year column
             year_col = 'YEAR' if 'YEAR' in df.columns else 'year' if 'year' in df.columns else None
             
-            # 筛选出 Q2 的数据
+            # Filter out Q2 data
             q2_data = df[df['question'].str.contains('Q2:', na=False)]
             
-            # ---------------- 关键修改：如果选了 'All'，保留年份维度 ----------------
+            # ---------------- Key modification: keep the year dimension if 'All' is selected ----------------
             if selected_year == 'All' and year_col:
                 data_dict = {}
                 for _, row in q2_data.iterrows():
@@ -63,10 +63,10 @@ def get_q2_data():
                     if y not in data_dict:
                         data_dict[y] = {}
                     data_dict[y][option] = data_dict[y].get(option, 0) + count
-                # 返回 2D 字典 (例如: {'2024': {'Yes': 10}, '2025': {'Yes': 15}})
+                # Return a 2D dictionary (e.g., {'2024': {'Yes': 10}, '2025': {'Yes': 15}})
                 return data_dict
                 
-            # ---------------- 如果选了特定年份，走原来的逻辑 ----------------
+            # ---------------- If a specific year is selected, run the original logic ----------------
             else:
                 if selected_year != 'All' and year_col:
                     q2_data = q2_data[q2_data[year_col].astype(str).str.strip() == str(selected_year)]
@@ -76,7 +76,7 @@ def get_q2_data():
                     option = str(row['option']).strip()
                     count = int(row['count']) if pd.notna(row['count']) else 0
                     data_dict[option] = data_dict.get(option, 0) + count
-                # 返回 1D 字典 (例如: {'Yes': 10, 'No': 5})
+                # Return a 1D dictionary (e.g., {'Yes': 10, 'No': 5})
                 return data_dict
         else:
             return {}
@@ -93,14 +93,14 @@ def create_q2_chart(data):
     title = "Distribution of Responses on Whether Entities Conducted Youth Employment Work in the Reference Period"
     import plotly.graph_objects as go
     
-    # 自动判断传进来的数据是 1D (单一年份) 还是 2D (All年份)
+    # Automatically determine if the input data is 1D (single year) or 2D (All years)
     is_2d = False
     if data:
         first_val = next(iter(data.values()))
         if isinstance(first_val, dict):
             is_2d = True
 
-    # ---------------- 如果是单一年份，画饼图 ----------------
+    # ---------------- If it's a single year, draw a pie chart ----------------
     if not is_2d:
         if STYLES_AVAILABLE:
             try:
@@ -109,7 +109,7 @@ def create_q2_chart(data):
             except Exception:
                 pass
                 
-        # 备用饼图代码
+        # Fallback pie chart code
         fig = go.Figure()
         categories = list(data.keys())
         values = list(data.values())
@@ -131,11 +131,11 @@ def create_q2_chart(data):
         )
         return fig
 
-    # ---------------- 核心：如果是 All，画 100% 堆叠柱状图 ----------------
+    # ---------------- Core logic: If 'All', draw a 100% stacked bar chart ----------------
     else:
         import pandas as pd
         
-        # 把带有年份的 2D 数据转成表格
+        # Convert 2D data with years into a dataframe
         df = pd.DataFrame(data).T.fillna(0)
         df.index.name = 'Year'
         df = df.sort_index()
@@ -156,7 +156,7 @@ def create_q2_chart(data):
             
         fig.update_layout(
             barmode='stack',
-            barnorm='percent',  # Plotly 魔法：这句代码直接把绝对值转为 100% 堆叠比例
+            barnorm='percent',  # Plotly magic: this line directly converts absolute values to 100% stacked ratios
             title={
                 'text': title,
                 'font': {'size': 14},
@@ -169,7 +169,7 @@ def create_q2_chart(data):
             plot_bgcolor='white',
             font_family="Noto Sans",
             yaxis=dict(title="Percentage (%)", ticksuffix="%", range=[0, 100]),
-            xaxis=dict(title="", type='category'),  # category 避免年份变成连续数值
+            xaxis=dict(title="", type='category'),  # 'category' prevents the year from becoming a continuous numerical value
             legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
             margin=dict(t=80, b=80, l=40, r=40)
         )
